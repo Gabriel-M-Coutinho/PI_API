@@ -1,0 +1,118 @@
+## Ignore build results
+[Bb]in/
+[Oo]bj/
+out/
+*.log
+*.msi
+*.pidb
+*.cache
+*.ncb
+
+## Ignore Visual Studio files
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.[Cc]ache
+*.vs/
+.vs/
+**/*.vspscc
+**/*.vssscc
+
+## Ignore Rider files
+*.sln.iml
+*.csproj.iml
+.idea/
+.rider/
+_ReSharper.*
+
+## Ignore NuGet
+.nuget/
+**/packages/*
+!**/packages/build/
+*.nupkg
+NuGet.exe
+NuGet.Config
+packages/
+
+## Ignore output folders
+/publish/
+/PublishProfiles/
+/Release/
+
+## Ignore Azure
+.azure/
+
+## Ignore logs and diagnostic files
+*.log
+*.sublime-project
+*.sublime-workspace
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Ignore temp files
+*.tmp
+*.temp
+*.tmp.md
+*.TMP
+_Temp*
+~$*
+
+## Ignore OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## Ignore test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+## Ignore config files (exceto appsettings)
+appsettings*.json
+!appsettings.json
+!appsettings.*.json
+appsettings*.Development.json
+
+## Ignore certificates and secrets
+*.pfx
+*.p12
+*.key
+*.crt
+*.cer
+*.pem
+*appsettings.Development.json
+*appsettings.Local.json
+*appsettings.Secrets.json
+
+## Ignore SQL Server files
+*.mdf
+*.ldf
+*.ndf
+
+## Ignore Entity Framework migrations (se necessário)
+# /Migrations/
+# !/Migrations/*.cs
+
+## Ignore coverage results
+coverage.xml
+coverage.json
+*.coverage
+*.coveragexml
+
+## Ignore Docker
+.dockerignore
+Dockerfile*
+docker-compose*
+.docker/
