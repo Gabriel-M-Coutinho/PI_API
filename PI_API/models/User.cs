@@ -5,29 +5,20 @@ namespace PI_API.models;
 
 public class User
 {
-    
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; } = string.Empty;
-
-
-        public string? Name { get; set; } = string.Empty;
-
-
-        public string? Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        
-        
+        public string Id { get; set; }
         public string? FullName { get; set; }
+        public string? Email { get; set; }
+        public string? Password { get; set; }
         public string? CpfCnpj { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } 
         public DateTime UpdatedAt { get; set; }
-        public Boolean Active { get; set; }
+        public bool Active { get; set; } = true;
 
         public User(){}
-        public User(string Name, string Email, string Password, string FullName, string CpfCnpj)
+        public User(string Email, string Password, string FullName, string CpfCnpj)
         {
-                this.Name = Name;
                 this.Email = Email;
                 this.Password = Password;
                 this.FullName = FullName;
@@ -35,6 +26,4 @@ public class User
                 CreatedAt = DateTime.Now;
                 Active = false;
         }
-
-
 }

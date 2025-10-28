@@ -1,8 +1,17 @@
+using LeadSearch.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Scripting;
 using PI_API.dto;
 using PI_API.models;
 using PI_API.services;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using BCrypt.Net;
+using Microsoft.AspNetCore.Authorization;
+using System.Data;
 
 namespace PI_API.controllers
 {
@@ -11,78 +20,89 @@ namespace PI_API.controllers
     public class UserController : ControllerBase
     {
         UserService _userService;
+
         public UserController(UserService userService)
         {
             _userService =  userService;
         }
         
         [HttpPost]
-        public async Task<ActionResult<List<User>>> Create([FromBody] UserDTO userDto)
+        public async Task<ActionResult<ApplicationUser>> Create([FromBody] UserDTO userDto)
         {
-            User newUser = new User();
-            
+            ApplicationUser newUser = new ApplicationUser();
+            string userName = userDto.FullName.Replace(" ", "");
+            var normalizedString = userName.Normalize(NormalizationForm.FormD);
+            StringBuilder sb = new StringBuilder();
+
+            foreach (char character in normalizedString)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(character);
+                }
+            }
+
+            userName = sb.ToString().Normalize(NormalizationForm.FormC);
+            userName = Regex.Replace(userName, @"[^a-zA-Z0-9\s]", "");
+
+            newUser.UserName = userName;
             newUser.Email = userDto.Email;
             newUser.CpfCnpj = userDto.CpfCnpj;
             newUser.FullName = userDto.FullName;
-            newUser.Name = userDto.Name;
-            
+            newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password);
+
             newUser.CreatedAt = DateTime.Now;
             newUser.UpdatedAt = DateTime.Now;
-            newUser.Active = false;
-            
-            
-            await _userService.CreateAsync(newUser);
-            return Ok();
-        }
+            newUser.Active = true;
 
+            await _userService.CreateAsync(newUser);
+
+            return Ok("criado com sucesso, faça login agora");
+        }
 
         [HttpGet]
-        public async Task<ActionResult<List<User>>> GetAll()
+
+        [Authorize(Roles = nameof(ROLE.ADMIN))]
+        public async Task<ActionResult<List<ApplicationUser>>> GetAll()
         {
-            List<User> list = await _userService.GetAsync();
-            return Ok(list);
+            List<ApplicationUser> users = await _userService.GetAsync();
+
+            return Ok(users);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> Get(string id)
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<ActionResult<ApplicationUser>> Get()
         {
-            return Ok(await _userService.GetByIdAsync(id));
+            var userId = User.FindFirst("userid")?.Value;
+            return Ok(await _userService.GetByIdAsync(userId));
         }
 
         [HttpDelete("{id}")]
+        [Authorize( Roles = nameof(ROLE.ADMIN))]
         public async Task<ActionResult> Delete(string id)
         {
             await _userService.DeleteAsync(id);
+
             return Ok();
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(string id, [FromBody] UserDTO userDto)
         {
-            User updatedUser = await _userService.GetByIdAsync(id);
-            if (updatedUser == null)
-            {
-                return BadRequest("User not found");
-            }
+            ApplicationUser updatedUser = await _userService.GetByIdAsync(id);
+
+            if (updatedUser == null) return BadRequest("User not found");
+
             updatedUser.FullName = userDto.FullName;
             updatedUser.Email = userDto.Email;
             updatedUser.CpfCnpj = userDto.CpfCnpj;
-            updatedUser.Name = userDto.Name;
             updatedUser.UpdatedAt = DateTime.Now;
             updatedUser.Active = true;
             
-            _userService.UpdateAsync(id, updatedUser);
+            await _userService.UpdateAsync(id, updatedUser);
+
             return Ok();
-            
-            
-        }
-
-        
-        
-        
-
-
-
-        
+        }    
     }
 }
