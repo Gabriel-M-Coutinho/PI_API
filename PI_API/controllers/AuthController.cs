@@ -31,6 +31,11 @@ namespace PI_API.controllers
             if (user == null)
                 return Unauthorized("Usuário não encontrado.");
 
+            if (!user.EmailConfirmed)
+            {
+                return Unauthorized("Email não validado");
+            }
+            
             bool validPassword = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
             if (!validPassword)
                 return Unauthorized("Senha incorreta.");

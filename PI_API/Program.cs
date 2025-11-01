@@ -8,6 +8,7 @@ using PI_API.db;
 using PI_API.services;
 using LeadSearch.Models;
 using System.Security.Claims;
+using PI_API.settings;
 
 namespace PI_API
 {
@@ -16,33 +17,36 @@ namespace PI_API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            // =============================
-            //  🔧 CONFIGURAÇÕES INICIAIS
-            // =============================
+            
             builder.Services.AddControllers();
 
-            // =============================
-            //  🗄️ MONGODB SETTINGS
-            // =============================
+
+            //  MONGODB SETTINGS
+
             builder.Services.Configure<MongoDbSettings>(
                 builder.Configuration.GetSection("MongoDbSettings"));
 
             // Serviço de Usuário
             builder.Services.AddSingleton<UserService>();
+            
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.AddSingleton<EmailService>();
 
-            // =============================
-            //  👤 IDENTITY + MONGODB
-            // =============================
-            builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+
+            // IDENTITY + MONGODB
+
+            builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+                {
+                    options.SignIn.RequireConfirmedEmail = true;
+                })
                 .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>(
                     builder.Configuration["MongoDbSettings:ConnectionString"],
                     builder.Configuration["MongoDbSettings:DatabaseName"])
+                
                 .AddDefaultTokenProviders();
+            
 
-            // =============================
-            //  🔑 AUTENTICAÇÃO JWT
-            // =============================
+
 
             // Obtém a chave JWT do appsettings.json
             var jwtKey = builder.Configuration["Jwt:Key"];
@@ -79,7 +83,7 @@ namespace PI_API
                     ClockSkew = TimeSpan.Zero // evita atrasos de expiração
                 };
 
-                // Permite autenticação via query string (opcional)
+    
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
@@ -97,14 +101,12 @@ namespace PI_API
                 };
             });
 
-            // =============================
-            //  🔒 AUTORIZAÇÃO
-            // =============================
-            builder.Services.AddAuthorization();
+            
 
-            // =============================
-            //  🧾 SWAGGER + JWT CONFIG
-            // =============================
+            builder.Services.AddAuthorization();
+            
+            //  SWAGGER + JWT CONFIG
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
@@ -136,9 +138,7 @@ namespace PI_API
                 });
             });
 
-            // =============================
-            //  🚀 BUILD E PIPELINE
-            // =============================
+
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
@@ -149,7 +149,7 @@ namespace PI_API
 
             app.UseHttpsRedirection();
 
-            // ⚠️ Ordem importante
+
             app.UseAuthentication();
             app.UseAuthorization();
 
