@@ -37,7 +37,7 @@ namespace PI_API
 
             builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
                 {
-                    options.SignIn.RequireConfirmedEmail = true;
+                    options.SignIn.RequireConfirmedEmail = false;
                 })
                 .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>(
                     builder.Configuration["MongoDbSettings:ConnectionString"],
@@ -45,9 +45,6 @@ namespace PI_API
                 
                 .AddDefaultTokenProviders();
             
-
-
-
             // Obtém a chave JWT do appsettings.json
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))

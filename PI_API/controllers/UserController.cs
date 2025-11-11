@@ -65,10 +65,10 @@
 
                 newUser.CreatedAt = DateTime.Now;
                 newUser.UpdatedAt = DateTime.Now;
-                newUser.Active = false;
+                newUser.Active = true;
 
                 await _userService.CreateAsync(newUser);
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
+                /*var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
                 var confirmationLink = $"https://localhost:3000/confirm-email?userId={newUser.Id.ToString()}&token={Uri.EscapeDataString(token)}";
                 
                 _ = Task.Run(async () =>
@@ -84,7 +84,7 @@
                         // opcional: logar o erro para acompanhamento
                         Console.WriteLine($"Erro ao enviar e-mail: {ex.Message}");
                     }
-                });
+                });*/
                 
                 return Ok("criado com sucesso, faca login agora");
             }
