@@ -20,9 +20,10 @@ namespace PI_API
             
             builder.Services.AddControllers();
 
+            // ScheduleService
+            builder.Services.AddHostedService<ScheduleService>();
 
             //  MONGODB SETTINGS
-
             builder.Services.Configure<MongoDbSettings>(
                 builder.Configuration.GetSection("MongoDbSettings"));
 

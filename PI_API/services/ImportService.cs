@@ -1,6 +1,6 @@
-﻿namespace PI_API.services
+﻿namespace PI_API.services;
+
+public class ImportService
 {
-    public class ImportService
-    {
-    }
+
 }
