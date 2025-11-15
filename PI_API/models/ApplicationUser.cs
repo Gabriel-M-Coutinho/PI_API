@@ -1,5 +1,6 @@
 using AspNetCore.Identity.MongoDbCore.Models;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDbGenericRepository.Attributes;
 using PI_API.models;
 
@@ -12,6 +13,7 @@ namespace LeadSearch.Models
         public string FullName { get; set; } = string.Empty;
         public string CpfCnpj { get; set; } = string.Empty;
         public bool Active { get; set; } = true;
+        [BsonElement("role")]
         public ROLE Role { get; set; } = ROLE.STANDARD;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

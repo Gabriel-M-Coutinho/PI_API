@@ -1,9 +1,8 @@
-﻿namespace PI_API.models
+﻿namespace PI_API.models;
+
+public enum ROLE
 {
-    public enum ROLE
-    {
-        ADMIN = 0,
-        STANDARD = 1,
-        SUPERVISOR = 2
-    }
+    ADMIN = 0,
+    STANDARD = 1,
+    SUPERVISOR = 2
 }

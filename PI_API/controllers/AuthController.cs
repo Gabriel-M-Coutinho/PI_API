@@ -1,10 +1,12 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+﻿using LeadSearch.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using PI_API.dto;
 using PI_API.services;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace PI_API.controllers
 {
@@ -15,7 +17,6 @@ namespace PI_API.controllers
         private readonly UserService _userService;
         private readonly IConfiguration _configuration;
 
-        // ✅ Precisa ser público para o ASP.NET conseguir injetar o serviço
         public AuthController(UserService userService, IConfiguration configuration)
         {
             _userService = userService;
@@ -25,24 +26,28 @@ namespace PI_API.controllers
         [HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] LoginDTO loginDto)
         {
-            // Procura o usuário pelo email/username
             var user = await _userService.GetByEmail(loginDto.Username);
 
-            if (user == null)
-                return Unauthorized("Usuário não encontrado.");
-            
-            bool validPassword = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
-            if (!validPassword)
-                return Unauthorized("Senha incorreta.");
+            if (user == null) return Unauthorized("Usuário não encontrado.");
 
-            // 🔐 Cria somente a claim com o ID do usuário
-            var claims = new[]
+            var roles = await _userService.GetRolesAsync(user);
+
+            bool validPassword = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
+            if (!validPassword) return Unauthorized("Senha incorreta.");
+
+            // Cria uma lista de Claims, inicialmente apenas com uma claim com o ID do usuário
+            var claims = new List<Claim>
             {
                 new Claim("userid", user.Id.ToString()),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
-            // 🔑 Gera o token
+            // ForEach das roles para colocar na claim
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            // Gera o token
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

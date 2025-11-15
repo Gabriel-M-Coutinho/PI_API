@@ -12,9 +12,11 @@ public class ScheduleService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) 
     {
         using PeriodicTimer timer = new PeriodicTimer(time);
+        /*
         while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
             Console.WriteLine("Fui executado");
-        }
+        } 
+        */
     }
 }

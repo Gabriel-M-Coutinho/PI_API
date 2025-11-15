@@ -1,4 +1,5 @@
 using LeadSearch.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -11,40 +12,59 @@ using PI_API.models;
     public class UserService
     {
         private readonly IMongoCollection<ApplicationUser> _usersCollection;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public UserService(IOptions<MongoDbSettings> mongoSettings)
+        public UserService(IOptions<MongoDbSettings> mongoSettings, UserManager<ApplicationUser> userManager)
         {
             var mongoClient = new MongoClient(mongoSettings.Value.ConnectionString);
             var database = mongoClient.GetDatabase(mongoSettings.Value.DatabaseName);
 
             _usersCollection = database.GetCollection<ApplicationUser>(mongoSettings.Value.UsersCollectionName);
-        }
+            _userManager = userManager;
+    }
 
-        public async Task<List<ApplicationUser>> GetAsync() =>
-            await _usersCollection.Find(_ => true).ToListAsync();
+        public async Task<List<ApplicationUser>> GetAsync() => await _usersCollection.Find(_ => true).ToListAsync();
 
         public async Task<ApplicationUser?> GetByIdAsync(string id)
         {
-            return await _usersCollection.Find(u => u.Id.ToString() == id).FirstOrDefaultAsync();
+            return await _userManager.FindByIdAsync(id);
         }
 
-        public async Task CreateAsync(ApplicationUser user)
-        { 
-            await _usersCollection.InsertOneAsync(user);
-        }
-
-        public async Task<ApplicationUser> GetByEmail(string  email) {
-            return await _usersCollection.Find(u => u.Email == email).FirstOrDefaultAsync();    
-        }
-
-        public async Task UpdateAsync(string id, ApplicationUser user)
+        public async Task<ApplicationUser?> GetByEmail(string email)
         {
-            await _usersCollection.ReplaceOneAsync(u => u.Id.ToString() == id, user);
+            return await _userManager.FindByEmailAsync(email);
         }
-            
-        public async Task DeleteAsync(string id)
+
+        public async Task<IdentityResult> CreateAsync(ApplicationUser user)
         {
-            await _usersCollection.DeleteOneAsync(u => u.Id.ToString() == id);
+            var result = await _userManager.CreateAsync(user);
+
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, nameof(ROLE.ADMIN));
+
+                return result;
+            }
+
+            return IdentityResult.Failed(new IdentityError { Description = "User not created" });
         }
-            
-    }
+
+        public async Task<IdentityResult> UpdateAsync(ApplicationUser user)
+        {
+            return await _userManager.UpdateAsync(user);
+        }
+
+        public async Task<IdentityResult> DeleteAsync(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null) return IdentityResult.Failed(new IdentityError { Description = "User not found" });
+
+            return await _userManager.DeleteAsync(user);
+        }
+
+        public async Task<IList<string>> GetRolesAsync(ApplicationUser user)
+        {
+            return await _userManager.GetRolesAsync(user);
+        }
+}

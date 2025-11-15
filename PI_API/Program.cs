@@ -1,14 +1,15 @@
+using LeadSearch.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 using MongoDB.Driver;
 using PI_API.db;
+using PI_API.models;
 using PI_API.services;
-using LeadSearch.Models;
-using System.Security.Claims;
 using PI_API.settings;
+using System.Security.Claims;
+using System.Text;
 
 namespace PI_API
 {
@@ -28,11 +29,10 @@ namespace PI_API
                 builder.Configuration.GetSection("MongoDbSettings"));
 
             // Serviço de Usuário
-            builder.Services.AddSingleton<UserService>();
+            builder.Services.AddScoped<UserService>();
             
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.AddSingleton<EmailService>();
-
 
             // IDENTITY + MONGODB
 
@@ -145,8 +145,28 @@ namespace PI_API
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            app.MapGet("/", () => Results.Redirect("/swagger"));
 
+            // 🔥 CRIA AUTOMATICAMENTE AS ROLES DO ENUM NO MONGO
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+
+                foreach (var enumValue in Enum.GetValues(typeof(ROLE)))
+                {
+                    string roleName = enumValue.ToString();
+
+                    if (!roleManager.RoleExistsAsync(roleName).Result)
+                    {
+                        roleManager.CreateAsync(new ApplicationRole
+                        {
+                            Name = roleName
+                        }).Wait();
+                    }
+                }
+            }
+
+            app.UseHttpsRedirection();
 
             app.UseAuthentication();
             app.UseAuthorization();
