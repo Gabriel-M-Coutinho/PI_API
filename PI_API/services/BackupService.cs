@@ -8,7 +8,7 @@ public class BackupService
     private const string MongoDumpPath = "mongodump";
     private const string MongoConnectionString = "mongodb://localhost:27017";
     private const string DatabaseName = "ApiDB";
-    private const string BackupDirectory = "C:\\Users\\0201392321040\\Desktop\\PI_API\\PI_API\\backup";
+    private const string BackupDirectory = "../backup";
     private static readonly List<string> BackupCollections = new List<string> { "User", "Order" };
 
     private static string GetBaseBackupPathWithTimestamp()

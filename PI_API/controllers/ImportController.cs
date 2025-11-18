@@ -4,11 +4,11 @@ using PI_API.services;
 
 namespace PI_API.controllers;
 
-public class ImportController
+public class ImportController : ControllerBase
 {
     [HttpGet("/api/import")]
     public IActionResult Import()
     {
-        return new Ok();
+        return Ok();
     }
 }
