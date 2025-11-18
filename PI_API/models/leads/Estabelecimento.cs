@@ -2,6 +2,7 @@
 
 public class Estabelecimento
 {
+    
     public string CnpjBase { get; set; }
     public string CnpjOrdem { get; set; }
     public string CnpjDV { get; set; }

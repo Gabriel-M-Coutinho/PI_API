@@ -84,7 +84,7 @@ namespace PI_API.services
             {
                 return;
             }*/
-            await DropAllCollectionsAsync();
+            //await DropAllCollectionsAsync();
             var processFiles = new List<Task>();
             var sw = new Stopwatch();
             sw.Start();
