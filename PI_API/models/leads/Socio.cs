@@ -1,7 +1,13 @@
-﻿namespace PI_API.models.leads;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
+namespace PI_API.models.leads;
 
 public class Socio
 {
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; }
     public string CnpjBase { get; set; }
     public string IdentificadoSocio { get; set; }
     public string NomeSocio { get; set; }

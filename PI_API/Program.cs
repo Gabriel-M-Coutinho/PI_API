@@ -107,7 +107,19 @@ namespace PI_API
             
 
             builder.Services.AddAuthorization();
-            
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy
+                        .WithOrigins("http://localhost:5173")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
+
             //  SWAGGER + JWT CONFIG
 
             builder.Services.AddEndpointsApiExplorer();
@@ -172,6 +184,8 @@ namespace PI_API
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("AllowFrontend");
 
             app.UseAuthentication();
             app.UseAuthorization();

@@ -12,6 +12,7 @@ namespace LeadSearch.Models
     {
         public string FullName { get; set; } = string.Empty;
         public string CpfCnpj { get; set; } = string.Empty;
+        public string? Tipo { get; set; }
         public bool Active { get; set; } = true;
         [BsonElement("role")]
         public ROLE Role { get; set; } = ROLE.STANDARD;
