@@ -30,16 +30,17 @@ namespace PI_API.services
         };
         //Configurações para conexão com o MongoDB
         //OBS: posteriormente não ficará aqui por questões de segurança
-        private static IConfiguration _mongoDbSettings;
-        public ImporterService(IConfiguration mongoDbSettings)
+        private MongoDbSettings _mongoDbSettings;
+        public ImporterService(MongoDbSettings mongoDbSettings)
         {
              _mongoDbSettings = mongoDbSettings;
+            mongoDatabase = new MongoClient(_mongoDbSettings.ConnectionString).GetDatabase(_mongoDbSettings.DatabaseName);
         }
 
         private readonly SemaphoreSlim downloadSemaphore = new(3);
         private readonly string[] filesArray = ["Cnaes",/* "Empresas0", "Empresas1", "Empresas2", "Empresas3", "Empresas4","Empresas5", "Empresas6", "Empresas7","Empresas8", */"Empresas9",/*"Estabelecimentos0","Estabelecimentos1","Estabelecimentos2","Estabelecimentos3","Estabelecimentos4","Estabelecimentos5","Estabelecimentos6","Estabelecimentos7","Estabelecimentos8",*/"Estabelecimentos9", "Motivos", "Municipios", "Naturezas", "Paises", "Qualificacoes", "Simples",/*"Socios0","Socios1","Socios2","Socios3","Socios4","Socios5","Socios6","Socios7", "Socios8", */"Socios9"];
         //Conexão com o MongoDB
-        private readonly IMongoDatabase mongoDatabase = new MongoClient(_mongoDbSettings["MongoDbSettings:ConnectionString"]).GetDatabase(_mongoDbSettings["MongoDbSettings:DatabaseName"]);
+        private readonly IMongoDatabase mongoDatabase;
         private readonly HttpClient httpClient = new(new HttpClientHandler
         {
             SslProtocols = System.Security.Authentication.SslProtocols.Tls12
@@ -84,7 +85,7 @@ namespace PI_API.services
             {
                 return;
             }*/
-            await DropAllCollectionsAsync();
+            //await DropAllCollectionsAsync();
             var processFiles = new List<Task>();
             var sw = new Stopwatch();
             sw.Start();
@@ -353,8 +354,7 @@ namespace PI_API.services
         private async Task DropAllCollectionsAsync()
         {
             Console.WriteLine("|=====| INICIANDO LIMPEZA DO BANCO DE DADOS |=====|");
-            var collectionNamesCursor = await mongoDatabase.ListCollectionNamesAsync();
-            var collectionNames = await collectionNamesCursor.ToListAsync();
+            string[] collectionNames = ["Cnaes", "Empresas", "Estabelecimentos", "Motivos", "Municipios", "Naturezas", "Paises", "Qualificacoes", "Simples", "Socios"];
 
             if (!collectionNames.Any())
             {
@@ -378,12 +378,12 @@ namespace PI_API.services
         {
             try
             {
-                var settings = MongoClientSettings.FromConnectionString(_mongoDbSettings["ConnectionString"]);
+                var settings = MongoClientSettings.FromConnectionString(_mongoDbSettings.ConnectionString);
                 settings.ConnectTimeout = TimeSpan.FromSeconds(5);
                 settings.SocketTimeout = TimeSpan.FromSeconds(5);
                 settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
 
-                var databaseTeste = new MongoClient(settings).GetDatabase(_mongoDbSettings["DatabaseName"]);
+                var databaseTeste = new MongoClient(settings).GetDatabase(_mongoDbSettings.DatabaseName);
 
                 await databaseTeste.RunCommandAsync<BsonDocument>(new BsonDocument("ping", 1));
                 Console.WriteLine("- Sucessfully MongoDB Conection");
