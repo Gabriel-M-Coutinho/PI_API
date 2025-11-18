@@ -3,7 +3,7 @@ namespace PI_API.models;
 public class Order
 {
     string id { get; set; }
-    List<OrderItem> orderItems = new List<OrderItem>();
+    public List<OrderItem> orderItems = new List<OrderItem>();
 
     public double GetTotal()
     {
