@@ -2,12 +2,12 @@
 
 public class Qualificacao
 {
-    public string Codigo { get; set; }
+    public string _id { get; set; }
     public string Descricao { get; set; }
 
-    public Qualificacao(string codigo, string descricao)
+    public Qualificacao(string id, string descricao)
     {
-        Codigo = codigo;
+        _id = id;
         Descricao = descricao;
     }
 }

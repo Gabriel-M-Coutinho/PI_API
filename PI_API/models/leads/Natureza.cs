@@ -2,12 +2,12 @@
 
 public class Natureza
 {
-    public string Codigo { get; set; }
+    public string _id { get; set; }
     public string Descricao { get; set; }
 
-    public Natureza(string codigo, string descricao)
+    public Natureza(string id, string descricao)
     {
-        Codigo = codigo;
+        _id = id;
         Descricao = descricao;
     }
 }

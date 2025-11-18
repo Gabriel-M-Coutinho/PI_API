@@ -2,12 +2,12 @@
 
 public class Municipio
 {
-    public string Codigo { get; set; }
+    public string _id { get; set; }
     public string Descricao { get; set; }
 
-    public Municipio(string codigo, string descricao)
+    public Municipio(string id, string descricao)
     {
-        Codigo = codigo;
+        _id = id;
         Descricao = descricao;
     }
 }

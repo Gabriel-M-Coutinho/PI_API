@@ -2,12 +2,12 @@
 
 public class Pais
 {
-    public string Codigo { get; set; }
+    public string _id { get; set; }
     public string Descricao { get; set; }
 
-    public Pais(string codigo, string descricao)
+    public Pais(string id, string descricao)
     {
-        Codigo = codigo;
+        _id = id;
         Descricao = descricao;
     }
 }

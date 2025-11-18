@@ -1,12 +1,12 @@
 namespace PI_API.models.leads;
 public class Cnae
 {
-    public string Codigo { get; set; }
+    public string _id { get; set; }
     public string Descricao { get; set; }
 
-    public Cnae(string codigo, string descricao)
+    public Cnae(string id, string descricao)
     {
-        Codigo = codigo;
+        _id = id;
         Descricao = descricao;
     }
 }

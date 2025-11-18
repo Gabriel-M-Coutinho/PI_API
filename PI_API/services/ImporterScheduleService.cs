@@ -2,14 +2,14 @@
 {
     public class ImporterScheduleService : ScheduledService
     {
-        public ImporterScheduleService(ILogger<ImporterScheduleService> logger) : base(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 28, 3, 0, 0), logger)
+        public ImporterScheduleService(ILogger<ImporterScheduleService> logger) : base(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 18, 12,30, 0), logger)
         {
 
         }
 
         protected override async Task ExecuteJob(CancellationToken stoppingToken)
         {
-            await ImporterService.Start();
+            //await Start();
             _dateScheduled = _dateScheduled.AddMonths(1);
         }
 

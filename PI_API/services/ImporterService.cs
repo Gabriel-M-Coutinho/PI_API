@@ -1,7 +1,10 @@
-﻿using ICSharpCode.SharpZipLib.Zip;
+﻿using AspNetCore.Identity.MongoDbCore.Infrastructure;
+using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Configuration;
+using PI_API.settings;
 using SharpCompress.Common;
 using SharpCompress.Writers;
 using System;
@@ -13,13 +16,13 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+
 namespace PI_API.services
 {
     public class ImporterService
     {
 
-        private static readonly Dictionary<string, int> ComputerConfig = new()
+        private readonly Dictionary<string, int> ComputerConfig = new()
         {
             ["Cores"] = Environment.ProcessorCount,
             ["RAM"] = 0,
@@ -27,16 +30,17 @@ namespace PI_API.services
         };
         //Configurações para conexão com o MongoDB
         //OBS: posteriormente não ficará aqui por questões de segurança
-        private static readonly Dictionary<string, string> ConnectionDatabaseConfig = new()
+        private static IConfiguration _mongoDbSettings;
+        public ImporterService(IConfiguration mongoDbSettings)
         {
-            ["DatabaseName"] = "LeadSearch",
-            ["ConnectionString"] = "mongodb://localhost:27017"
-        };
-        private static readonly SemaphoreSlim downloadSemaphore = new(3);
-        private static readonly string[] filesArray = ["Cnaes",/* "Empresas0", "Empresas1", "Empresas2", "Empresas3", "Empresas4","Empresas5", "Empresas6", "Empresas7","Empresas8", */"Empresas9",/*"Estabelecimentos0","Estabelecimentos1","Estabelecimentos2","Estabelecimentos3","Estabelecimentos4","Estabelecimentos5","Estabelecimentos6","Estabelecimentos7","Estabelecimentos8",*/"Estabelecimentos9", "Motivos", "Municipios", "Naturezas", "Paises", "Qualificacoes", "Simples",/*"Socios0","Socios1","Socios2","Socios3","Socios4","Socios5","Socios6","Socios7", "Socios8", */"Socios9"];
+             _mongoDbSettings = mongoDbSettings;
+        }
+
+        private readonly SemaphoreSlim downloadSemaphore = new(3);
+        private readonly string[] filesArray = ["Cnaes",/* "Empresas0", "Empresas1", "Empresas2", "Empresas3", "Empresas4","Empresas5", "Empresas6", "Empresas7","Empresas8", */"Empresas9",/*"Estabelecimentos0","Estabelecimentos1","Estabelecimentos2","Estabelecimentos3","Estabelecimentos4","Estabelecimentos5","Estabelecimentos6","Estabelecimentos7","Estabelecimentos8",*/"Estabelecimentos9", "Motivos", "Municipios", "Naturezas", "Paises", "Qualificacoes", "Simples",/*"Socios0","Socios1","Socios2","Socios3","Socios4","Socios5","Socios6","Socios7", "Socios8", */"Socios9"];
         //Conexão com o MongoDB
-        private static readonly IMongoDatabase mongoDatabase = new MongoClient(ConnectionDatabaseConfig["ConnectionString"]).GetDatabase(ConnectionDatabaseConfig["DatabaseName"]);
-        private static readonly HttpClient httpClient = new(new HttpClientHandler
+        private readonly IMongoDatabase mongoDatabase = new MongoClient(_mongoDbSettings["MongoDbSettings:ConnectionString"]).GetDatabase(_mongoDbSettings["MongoDbSettings:DatabaseName"]);
+        private readonly HttpClient httpClient = new(new HttpClientHandler
         {
             SslProtocols = System.Security.Authentication.SslProtocols.Tls12
         })
@@ -44,10 +48,10 @@ namespace PI_API.services
             Timeout = TimeSpan.FromMinutes(10),
             DefaultRequestVersion = HttpVersion.Version20 // Melhor desempenho HTTP/2
         };
-        private static readonly Encoding Latin1Encoding = Encoding.GetEncoding("ISO-8859-1");
+        private readonly Encoding Latin1Encoding = Encoding.GetEncoding("ISO-8859-1");
 
-        private static string baseUrl = "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/2025-09/";
-        private static readonly Dictionary<string, string[]> headers = new()
+        private string baseUrl = "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/";
+        private readonly Dictionary<string, string[]> headers = new()
         {
             ["Cnaes"] = ["_id", "descricao"],
             ["Empresas"] = ["cnpjBase", "razaoSocial", "naturezaJuridica", "qualificacaoResponsavel", "capitalSocial", "porteEmpresa", "enteFederativo"],
@@ -70,7 +74,7 @@ namespace PI_API.services
            * Log(): Retorna as Mensagens de Erro
            * Config(): Para configurar alguma coisa da importação (ConnectionDatabaseConfig, Limitação dos recursos disponíveis, etc...)
          */
-        public static async Task Start()
+        public async Task Start()
         /* [Start]
         - Será o Main dessa Classe
         - Terá como Papel chamar os metodos para executar o processo de todos os arquivos */
@@ -110,7 +114,7 @@ namespace PI_API.services
             Console.WriteLine($"Tempo Decorrido: {sw.Elapsed.Hours}h {sw.Elapsed.Minutes}m {sw.Elapsed.Seconds}s {sw.Elapsed.Milliseconds}ms");
         }
 
-        private static async Task ProcessFile(string fileName)
+        private async Task ProcessFile(string fileName)
         /* [ProcessDocument]
         - Método Responsavel pelo processo completo (download -> processamento -> importação) de um único
         - Também é onde ficarão os Canais (Channel)
@@ -119,7 +123,7 @@ namespace PI_API.services
         - Adicionar/Retirar trabalhadores com base na necessidade, se quem estiver causando o gargalo for o banco adicionar mais no banco*/
         {
             List<string> ErrorLines = new List<string>();
-            var file = baseUrl + fileName + ".zip";
+            var file = baseUrl + DateTime.Now.ToString("yyyy-MM") + @"\" + fileName + ".zip";
             var channelOptions = new BoundedChannelOptions(50000) { FullMode = BoundedChannelFullMode.Wait }; //quando encher, começar a escrever no disco para não atrapalhar o download, ou alguma outra etapa
             fileName = Regex.Replace(fileName, @"[0-9]", "");
             var thisHeaderCollection = headers[fileName];
@@ -346,7 +350,7 @@ namespace PI_API.services
             }
         }
 
-        private static async Task DropAllCollectionsAsync()
+        private async Task DropAllCollectionsAsync()
         {
             Console.WriteLine("|=====| INICIANDO LIMPEZA DO BANCO DE DADOS |=====|");
             var collectionNamesCursor = await mongoDatabase.ListCollectionNamesAsync();
@@ -370,16 +374,16 @@ namespace PI_API.services
 
         // CheckConnection
 
-        public static async Task<bool> CheckMongoConnection()
+        public async Task<bool> CheckMongoConnection()
         {
             try
             {
-                var settings = MongoClientSettings.FromConnectionString(ConnectionDatabaseConfig["ConnectionString"]);
+                var settings = MongoClientSettings.FromConnectionString(_mongoDbSettings["ConnectionString"]);
                 settings.ConnectTimeout = TimeSpan.FromSeconds(5);
                 settings.SocketTimeout = TimeSpan.FromSeconds(5);
                 settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
 
-                var databaseTeste = new MongoClient(settings).GetDatabase(ConnectionDatabaseConfig["DatabaseName"]);
+                var databaseTeste = new MongoClient(settings).GetDatabase(_mongoDbSettings["DatabaseName"]);
 
                 await databaseTeste.RunCommandAsync<BsonDocument>(new BsonDocument("ping", 1));
                 Console.WriteLine("- Sucessfully MongoDB Conection");
@@ -392,7 +396,7 @@ namespace PI_API.services
             }
         }
 
-        public static async Task<bool> CheckHttpConnection()
+        public async Task<bool> CheckHttpConnection()
         {
             try
             {
@@ -409,7 +413,7 @@ namespace PI_API.services
 
         // Melhorar Retry
 
-        private static async Task<T> RetryAsync<T>(Func<Task<T>> action, int maxAttempts, int delayMs = 2000)
+        private async Task<T> RetryAsync<T>(Func<Task<T>> action, int maxAttempts, int delayMs = 2000)
         {
             List<Exception> exceptions = new();
             for (int attempt = 0; attempt < maxAttempts; attempt++)
