@@ -24,15 +24,16 @@ namespace PI_API
             // ScheduleService
             //builder.Services.AddHostedService<ScheduleService>();
             builder.Services.AddHostedService<ImporterScheduleService>();
-            //builder.Services.AddHostedService<BackupScheduleService>();
+            builder.Services.AddHostedService<BackupScheduleService>();
 
             //  MONGODB SETTINGS
             builder.Services.Configure<MongoDbSettings>(
                 builder.Configuration.GetSection("MongoDbSettings"));
 
-            // Serviço de Usuário
+            // Serviços
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<ImporterService>();
+            builder.Services.AddScoped<BackupService>();
             builder.Services.AddScoped<DatabaseFormater>();
 
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
