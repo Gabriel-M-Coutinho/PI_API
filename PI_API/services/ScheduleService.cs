@@ -1,22 +1,31 @@
 ﻿namespace PI_API.services;
 
-public class ScheduleService : BackgroundService
+public abstract class ScheduledService : BackgroundService
 {
-    private readonly TimeSpan time = TimeSpan.FromSeconds(1);
-    private readonly ILogger<ScheduleService> _logger;
-    public ScheduleService(ILogger<ScheduleService> logger)
+    protected DateTime _dateScheduled;
+    private readonly ILogger _logger;
+
+    protected ScheduledService(DateTime dateScheduled, ILogger logger)
     {
+        _dateScheduled = dateScheduled;
         _logger = logger;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken) 
+    protected abstract Task ExecuteJob(CancellationToken stoppingToken);
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using PeriodicTimer timer = new PeriodicTimer(time);
-        /*
-        while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
+        while (true)
         {
-            Console.WriteLine("Fui executado");
-        } 
-        */
+            TimeSpan delay = _dateScheduled - DateTime.Now;
+
+            if (delay > TimeSpan.Zero)
+            {
+                _logger.LogInformation($"Backup agendado para {_dateScheduled}");
+                await Task.Delay(delay, stoppingToken);
+            }
+
+            await ExecuteJob(stoppingToken);
+        }
     }
 }
