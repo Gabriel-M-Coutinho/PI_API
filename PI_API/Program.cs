@@ -29,10 +29,16 @@ namespace PI_API
             //  MONGODB SETTINGS
             builder.Services.Configure<MongoDbSettings>(
                 builder.Configuration.GetSection("MongoDbSettings"));
+            //uma linha
+            builder.Services.AddSingleton<ContextMongodb>();
+
+            ContextMongodb.ConnectionString = builder.Configuration.GetSection("MongoDbSettings:ConnectionString").Value;
+            ContextMongodb.Database = builder.Configuration.GetSection("MongoDbSettings:DatabaseName").Value;
+            ContextMongodb.IsSSL = true;
 
             // Serviços
             builder.Services.AddScoped<UserService>();
-            builder.Services.AddScoped<ImporterService>();
+            builder.Services.AddSingleton<ImporterService>();
             builder.Services.AddScoped<BackupService>();
             builder.Services.AddScoped<DatabaseFormater>();
 

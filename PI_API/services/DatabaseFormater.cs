@@ -9,25 +9,26 @@ namespace PI_API.services
 
         private static readonly Dictionary<string, string[]> headers = new()
         {
-            ["Cnaes"] = ["_id", "descricao"],
-            ["Empresas"] = ["cnpjBase", "razaoSocial", "naturezaJuridica", "qualificacaoResponsavel", "capitalSocial", "porteEmpresa", "enteFederativo"],
-            ["Estabelecimentos"] = ["cnpjBase", "cnpjOrdem", "cnpjDV", "matrizFilial", "nomeFantasia", "situacaoCadastral", "dataSituacaoCadastral", "motivoSituacaoCadastral", "cidadeExterior", "pais", "dataInicioAtividade", "cnaePrincipal", "cnaeSecundario", "tipoLogradouro", "logradouro", "numero", "complemento", "bairro", "CEP", "UF", "municipio", "ddd1", "telefone1", "ddd2", "telefone2", "dddFAX", "FAX", "correioEletronico", "situacaoEspecial", "dataSituacaoEspecial"],
-            ["Motivos"] = ["_id", "descricao"],
-            ["Municipios"] = ["_id", "descricao"],
-            ["Naturezas"] = ["_id", "descricao"],
-            ["Paises"] = ["_id", "descricao"],
-            ["Qualificacoes"] = ["_id", "descricao"],
-            ["Simples"] = ["cnpjBase", "opcaoDoSimples", "dataOpcaoDoSimples", "dataExclusaoDoSimples", "MEI", "dataOpcaoMEI", "dataExclusaoMei"],
-            ["Socios"] = ["cnpjBase", "identificadorSocio", "nomeSocio", "cnpjCpf", "qualificaoSocio", "dataEntradaSociedade", "pais", "representanteLegal", "nomeRepresentante", "qualificacaoResponsavel", "faixaEtaria"]
+            ["Cnaes"] = ["_id", "Descricao"],
+            ["Empresas"] = ["CnpjBase", "RazaoSocial", "NaturezaJuridica", "QualificacaoResponsavel", "CapitalSocial", "PorteEmpresa", "EnteFederativo"],
+            ["Estabelecimentos"] = ["CnpjBase", "CnpjOrdem", "CnpjDV", "MatrizFilial", "NomeFantasia", "SituacaoCadastral", "DataSituacaoCadastral", "MotivoSituacaoCadastral", "CidadeExterior", "Pais", "DataInicioAtividade", "CnaePrincipal", "CnaeSecundario", "TipoLogradouro", "Logradouro", "Numero", "Complemento", "Bairro", "CEP", "UF", "Municipio", "Ddd1", "Telefone1", "Ddd2", "Telefone2", "DddFAX", "FAX", "CorreioEletronico", "SituacaoEspecial", "DataSituacaoEspecial"],
+            ["Motivos"] = ["_id", "Descricao"],
+            ["Municipios"] = ["_id", "Descricao"],
+            ["Naturezas"] = ["_id", "Descricao"],
+            ["Paises"] = ["_id", "Descricao"],
+            ["Qualificacoes"] = ["_id", "Descricao"],
+            ["Simples"] = ["CnpjBase", "OpcaoDoSimples", "DataOpcaoDoSimples", "DataExclusaoDoSimples", "MEI", "DataOpcaoMEI", "DataExclusaoMei"],
+            ["Socios"] = ["CnpjBase", "IdentificadorSocio", "NomeSocio", "CnpjCpf", "QualificacaoSocio", "DataEntradaSociedade", "Pais", "RepresentanteLegal", "NomeRepresentante", "QualificacaoResponsavel", "FaixaEtaria"]
         };
+
 
 
         public static void Empresas(BsonDocument doc, ReadOnlySpan<byte> fieldSpan, int headerIdx)
         {
             switch (headers["Empresas"][headerIdx])
             {
-                case "capitalSocial":
-                    doc["capitalSocial"] = ParseLatin1Double(fieldSpan);
+                case "CapitalSocial":
+                    doc["CapitalSocial"] = ParseLatin1Double(fieldSpan);
                     break;
                 default:
                     doc[headers["Empresas"][headerIdx]] = Latin1Encoding.GetString(fieldSpan);
@@ -38,20 +39,25 @@ namespace PI_API.services
         {
             switch (headers["Estabelecimentos"][headerIdx])
             {
-                case "dataSituacaoCadastral":
-                case "dataInicioAtividade":
-                case "dataSituacaoEspecial":
-                    doc[headers["Estabelecimentos"][headerIdx]] = fieldSpan.IndexOfAnyExcept((byte)'0') == -1 ? "" : StringToDateTime(fieldSpan);
+                case "DataSituacaoCadastral":
+                case "DataInicioAtividade":
+                case "DataSituacaoEspecial":
+                    doc[headers["Estabelecimentos"][headerIdx]] = fieldSpan.IndexOfAnyExcept((byte)'0') == -1 ? new DateTime(1, 1, 1) : StringToDateTime(fieldSpan);
                     break;
-                case "faixaEtaria":
-                case "numero":
-                case "ddd1":
-                case "ddd2":
-                case "dddFAX":
+                case "FaixaEtaria":
+                //case "Numero":
+                //case "Ddd1":
+                //case "Ddd2":
+                //case "DddFAX":
                     doc[headers["Estabelecimentos"][headerIdx]] = Latin1BytesToInt(fieldSpan);
                     break;
-                case "cnaeSecundario":
-                    doc["cnaeSecundario"] = CnaesArray(fieldSpan);
+                case "CnaeSecundario":
+                    if(fieldSpan.IsEmpty)
+                    {
+                        doc["CnaeSecundario"] = new BsonArray();
+                        return;
+                    }
+                    doc["CnaeSecundario"] = CnaesArray(fieldSpan);
                     break;
                 default:
                     doc[headers["Estabelecimentos"][headerIdx]] = Latin1Encoding.GetString(fieldSpan);
@@ -63,11 +69,11 @@ namespace PI_API.services
         {
             switch (headers["Socios"][headerIdx])
             {
-                case "dataEntradaSociedade":
-                    doc["dataEntradaSociedade"] = fieldSpan.IndexOfAnyExcept((byte)'0') == -1 ? "" : StringToDateTime(fieldSpan);
+                case "DataEntradaSociedade":
+                    doc["DataEntradaSociedade"] = fieldSpan.IndexOfAnyExcept((byte)'0') == -1 ? new DateTime(1, 1, 1) : StringToDateTime(fieldSpan);
                     break;
-                case "identificadorSocio":
-                case "faixaEtaria":
+                case "IdentificadorSocio":
+                case "FaixaEtaria":
                     doc[headers["Socios"][headerIdx]] = Latin1BytesToInt(fieldSpan);
                     break;
                 default:
@@ -79,11 +85,11 @@ namespace PI_API.services
         {
             switch (headers["Simples"][headerIdx])
             {
-                case "dataOpcaoDoSimples":
-                case "dataExclusaoDoSimples":
-                case "dataOpcaoMEI":
-                case "dataExclusaoMei":
-                    doc[headers["Simples"][headerIdx]] = fieldSpan.IndexOfAnyExcept((byte)'0') == -1 ? "" : StringToDateTime(fieldSpan);
+                case "DataOpcaoDoSimples":
+                case "DataExclusaoDoSimples":
+                case "DataOpcaoMEI":
+                case "DataExclusaoMei":
+                    doc[headers["Simples"][headerIdx]] = fieldSpan.IndexOfAnyExcept((byte)'0') == -1 ? new DateTime(1, 1, 1) : StringToDateTime(fieldSpan);
                     break;
                 default:
                     doc[headers["Simples"][headerIdx]] = Latin1Encoding.GetString(fieldSpan);

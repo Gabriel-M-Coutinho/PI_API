@@ -54,16 +54,16 @@ namespace PI_API.services
         private string baseUrl = "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/";
         private readonly Dictionary<string, string[]> headers = new()
         {
-            ["Cnaes"] = ["_id", "descricao"],
-            ["Empresas"] = ["cnpjBase", "razaoSocial", "naturezaJuridica", "qualificacaoResponsavel", "capitalSocial", "porteEmpresa", "enteFederativo"],
-            ["Estabelecimentos"] = ["cnpjBase", "cnpjOrdem", "cnpjDV", "matrizFilial", "nomeFantasia", "situacaoCadastral", "dataSituacaoCadastral", "motivoSituacaoCadastral", "cidadeExterior", "pais", "dataInicioAtividade", "cnaePrincipal", "cnaeSecundario", "tipoLogradouro", "logradouro", "numero", "complemento", "bairro", "CEP", "UF", "municipio", "ddd1", "telefone1", "ddd2", "telefone2", "dddFAX", "FAX", "correioEletronico", "situacaoEspecial", "dataSituacaoEspecial"],
-            ["Motivos"] = ["_id", "descricao"],
-            ["Municipios"] = ["_id", "descricao"],
-            ["Naturezas"] = ["_id", "descricao"],
-            ["Paises"] = ["_id", "descricao"],
-            ["Qualificacoes"] = ["_id", "descricao"],
-            ["Simples"] = ["cnpjBase", "opcaoDoSimples", "dataOpcaoDoSimples", "dataExclusaoDoSimples", "MEI", "dataOpcaoMEI", "dataExclusaoMei"],
-            ["Socios"] = ["cnpjBase", "identificadorSocio", "nomeSocio", "cnpjCpf", "qualificaoSocio", "dataEntradaSociedade", "pais", "representanteLegal", "nomeRepresentante", "qualificacaoResponsavel", "faixaEtaria"]
+            ["Cnaes"] = ["_id", "Descricao"],
+            ["Empresas"] = ["CnpjBase", "RazaoSocial", "NaturezaJuridica", "QualificacaoResponsavel", "CapitalSocial", "PorteEmpresa", "EnteFederativo"],
+            ["Estabelecimentos"] = ["CnpjBase", "CnpjOrdem", "CnpjDV", "MatrizFilial", "NomeFantasia", "SituacaoCadastral", "DataSituacaoCadastral", "MotivoSituacaoCadastral", "CidadeExterior", "Pais", "DataInicioAtividade", "CnaePrincipal", "CnaeSecundario", "TipoLogradouro", "Logradouro", "Numero", "Complemento", "Bairro", "CEP", "UF", "Municipio", "Ddd1", "Telefone1", "Ddd2", "Telefone2", "DddFAX", "FAX", "CorreioEletronico", "SituacaoEspecial", "DataSituacaoEspecial"],
+            ["Motivos"] = ["_id", "Descricao"],
+            ["Municipios"] = ["_id", "Descricao"],
+            ["Naturezas"] = ["_id", "Descricao"],
+            ["Paises"] = ["_id", "Descricao"],
+            ["Qualificacoes"] = ["_id", "Descricao"],
+            ["Simples"] = ["CnpjBase", "OpcaoDoSimples", "DataOpcaoDoSimples", "DataExclusaoDoSimples", "MEI", "DataOpcaoMEI", "DataExclusaoMei"],
+            ["Socios"] = ["CnpjBase", "IdentificadorSocio", "NomeSocio", "CnpjCpf", "QualificacaoSocio", "DataEntradaSociedade", "Pais", "RepresentanteLegal", "NomeRepresentante", "QualificacaoResponsavel", "FaixaEtaria"]
         };
 
         /* CÓDIGO (Métodos Públicos)
@@ -85,7 +85,7 @@ namespace PI_API.services
             {
                 return;
             }*/
-            //await DropAllCollectionsAsync();
+            await DropAllCollectionsAsync();
             var processFiles = new List<Task>();
             var sw = new Stopwatch();
             sw.Start();

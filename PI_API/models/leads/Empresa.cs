@@ -7,7 +7,7 @@ public class Empresa
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public string Id { get; set; }
+    public string _id { get; set; }
     public string? CnpjBase { get; set; }
     public string? RazaoSocial { get; set; }
     public string? NaturezaJuridica { get; set; }

@@ -7,12 +7,12 @@ public class Socio
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public string Id { get; set; }
+    public string _id { get; set; }
     public string CnpjBase { get; set; }
-    public string IdentificadoSocio { get; set; }
+    public string IdentificadorSocio { get; set; }
     public string NomeSocio { get; set; }
     public string CnpjCpf { get; set; }
-    public string QualificaoSocio { get; set; }
+    public string QualificacaoSocio { get; set; }
     public DateTime? DataEntradaSociedade { get; set; }
     public string Pais { get; set; }
     public string RepresentanteLegal { get; set; }
@@ -20,13 +20,13 @@ public class Socio
     public string QualificacaoResponsavel { get; set; }
     public string FaixaEtaria { get; set; }
 
-    public Socio(string cnpjBase, string identificadoSocio, string nomeSocio, string cnpjCpf, string qualificaoSocio, DateTime? dataEntradaSociedade, string pais, string representanteLegal, string nomeRepresentante, string qualificacaoResponsavel, string faixaEtaria)
+    public Socio(string cnpjBase, string identificadorSocio, string nomeSocio, string cnpjCpf, string qualificacaoSocio, DateTime? dataEntradaSociedade, string pais, string representanteLegal, string nomeRepresentante, string qualificacaoResponsavel, string faixaEtaria)
     {
         CnpjBase = cnpjBase;
-        IdentificadoSocio = identificadoSocio;
+        IdentificadorSocio = identificadorSocio;
         NomeSocio = nomeSocio;
         CnpjCpf = cnpjCpf;
-        QualificaoSocio = qualificaoSocio;
+        QualificacaoSocio = qualificacaoSocio;
         DataEntradaSociedade = dataEntradaSociedade;
         Pais = pais;
         RepresentanteLegal = representanteLegal;
