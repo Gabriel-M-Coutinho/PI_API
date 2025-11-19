@@ -31,6 +31,9 @@ namespace PI_API.controllers
             ["INAPTA"] = "04",
             ["BAIXADA"] = "08"
         };
+        
+        
+        
         [HttpGet]
         public async Task<IActionResult> Search()
         {
@@ -40,41 +43,65 @@ namespace PI_API.controllers
             var filters = new List<FilterDefinition<Estabelecimento>>();
             var builder = Builders<Estabelecimento>.Filter;
 
+            int page = query.ContainsKey("page") ? int.Parse(query["page"]) : 1;
+            int pageSize = query.ContainsKey("pageSize") ? int.Parse(query["pageSize"]) : 20;
+
             foreach (var param in query)
             {
                 var key = param.Key.ToLower();
                 var value = param.Value.ToString();
 
-                Console.WriteLine(value.ToUpper());
                 switch (key)
                 {
                     case "nomefantasia":
                         filters.Add(builder.Eq("NomeFantasia", value));
                         break;
+
                     case "cnae":
-                        filters.Add(builder.Eq("CnaePrincipal", value)); ;
+                        filters.Add(builder.Eq("CnaePrincipal", value));
                         break;
 
                     case "situacaocadastral":
                         if (SituacaoCadastral.ContainsKey(value.ToUpper()))
                         {
                             filters.Add(builder.Eq("SituacaoCadastral", SituacaoCadastral[value.ToUpper()]));
-                            break;
                         }
-                        Console.WriteLine($"{value.ToUpper()} não é um valor válido para situacaoCadastral");
                         break;
-                    default:
-                        // ignorar params desconhecidos
-                        break;
+
+                    case "page":
+                        break; 
+                    case "pageSize":
+                        break; 
                 }
             }
 
-            var finalFilter = filters.Count() != 0
+            var finalFilter = filters.Count > 0
                 ? builder.And(filters)
                 : builder.Empty;
 
-            var results = await collection.Find(finalFilter).ToListAsync();
-            return Ok(results.ToJson());
+            // Total antes da paginação
+            long totalItems = await collection.CountDocumentsAsync(finalFilter);
+
+            // Aplicando paginação
+            var results = await collection
+                .Find(finalFilter)
+                .Skip((page - 1) * pageSize)
+                .Limit(pageSize)
+                .ToListAsync();
+
+
+            var response = new ResponseDTO
+            {
+                Success = true,
+                Message = "Busca realizada com sucesso.",
+                Data = results,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+            };
+
+            return Ok(response);
         }
     }
 }

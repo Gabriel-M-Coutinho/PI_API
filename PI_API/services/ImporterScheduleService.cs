@@ -3,7 +3,7 @@
     public class ImporterScheduleService : ScheduledService
     {
         private ImporterService _importerService;
-        public ImporterScheduleService(ILogger<ImporterScheduleService> logger, ImporterService importerService) : base(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 28, 3,0, 0), logger)
+        public ImporterScheduleService(ILogger<ImporterScheduleService> logger, ImporterService importerService) : base(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 19, 18,47, 0), logger)
         {
             _importerService = importerService;
         }

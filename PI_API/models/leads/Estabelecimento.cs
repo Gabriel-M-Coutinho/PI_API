@@ -8,6 +8,7 @@ public class Estabelecimento
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     public string _id { get; set; }
+
     public string CnpjBase { get; set; }
     public string CnpjOrdem { get; set; }
     public string CnpjDV { get; set; }
@@ -20,7 +21,10 @@ public class Estabelecimento
     public string Pais { get; set; }
     public DateTime? DataInicioAtividade { get; set; }
     public string CnaePrincipal { get; set; }
-    public BsonArray CnaeSecundario { get; set; }
+
+    // Lista nativa do .NET — funciona perfeitamente com JSON
+    public List<string> CnaeSecundario { get; set; } = new();
+
     public string TipoLogradouro { get; set; }
     public string Logradouro { get; set; }
     public string Numero { get; set; }
@@ -39,7 +43,16 @@ public class Estabelecimento
     public string SituacaoEspecial { get; set; }
     public DateTime? DataSituacaoEspecial { get; set; }
 
-    public Estabelecimento(string cnpjBase, string cnpjOrdem, string cnpjDV, string matrizFilial, string nomeFantasia, string situacaoCadastral, DateTime? dataSituacaoCadastral, string motivoSituacaoCadastral, string cidadeExterior, string pais, DateTime? dataInicioAtividade, string cnaePrincipal, BsonArray cnaeSecundario, string tipoLogradouro, string logradouro, string numero, string complemento, string bairro, string cEP, string uF, string municipio, string ddd1, string telefone1, string ddd2, string telefone2, string dddFAX, string fAX, string correioEletronico, string situacaoEspecial, DateTime? dataSituacaoEspecial)
+    // Construtor atualizado
+    public Estabelecimento(
+        string cnpjBase, string cnpjOrdem, string cnpjDV, string matrizFilial,
+        string nomeFantasia, string situacaoCadastral, DateTime? dataSituacaoCadastral,
+        string motivoSituacaoCadastral, string cidadeExterior, string pais,
+        DateTime? dataInicioAtividade, string cnaePrincipal, List<string> cnaeSecundario,
+        string tipoLogradouro, string logradouro, string numero, string complemento,
+        string bairro, string cep, string uf, string municipio, string ddd1,
+        string telefone1, string ddd2, string telefone2, string dddFax, string fax,
+        string correioEletronico, string situacaoEspecial, DateTime? dataSituacaoEspecial)
     {
         CnpjBase = cnpjBase;
         CnpjOrdem = cnpjOrdem;
@@ -53,60 +66,60 @@ public class Estabelecimento
         Pais = pais;
         DataInicioAtividade = dataInicioAtividade;
         CnaePrincipal = cnaePrincipal;
-        CnaeSecundario = cnaeSecundario;
+        CnaeSecundario = cnaeSecundario ?? new List<string>();
         TipoLogradouro = tipoLogradouro;
         Logradouro = logradouro;
         Numero = numero;
         Complemento = complemento;
         Bairro = bairro;
-        CEP = cEP;
-        UF = uF;
+        CEP = cep;
+        UF = uf;
         Municipio = municipio;
         Ddd1 = ddd1;
         Telefone1 = telefone1;
         Ddd2 = ddd2;
         Telefone2 = telefone2;
-        DddFAX = dddFAX;
-        FAX = fAX;
+        DddFAX = dddFax;
+        FAX = fax;
         CorreioEletronico = correioEletronico;
         SituacaoEspecial = situacaoEspecial;
         DataSituacaoEspecial = dataSituacaoEspecial;
     }
+
     public override string ToString()
     {
         return $@"
-        Id: {_id}
-        CnpjBase: {CnpjBase}
-        CnpjOrdem: {CnpjOrdem}
-        CnpjDV: {CnpjDV}
-        MatrizFilial: {MatrizFilial}
-        NomeFantasia: {NomeFantasia}
-        SituacaoCadastral: {SituacaoCadastral}
-        DataSituacaoCadastral: {DataSituacaoCadastral}
-        MotivoSituacaoCadastral: {MotivoSituacaoCadastral}
-        CidadeExterior: {CidadeExterior}
-        Pais: {Pais}
-        DataInicioAtividade: {DataInicioAtividade}
-        CnaePrincipal: {CnaePrincipal}
-        CnaeSecundario: {(CnaeSecundario == null ? "" : string.Join(", ", CnaeSecundario))}
-        TipoLogradouro: {TipoLogradouro}
-        Logradouro: {Logradouro}
-        Numero: {Numero}
-        Complemento: {Complemento}
-        Bairro: {Bairro}
-        CEP: {CEP}
-        UF: {UF}
-        Municipio: {Municipio}
-        Ddd1: {Ddd1}
-        Telefone1: {Telefone1}
-        Ddd2: {Ddd2}
-        Telefone2: {Telefone2}
-        DddFAX: {DddFAX}
-        FAX: {FAX}
-        CorreioEletronico: {CorreioEletronico}
-        SituacaoEspecial: {SituacaoEspecial}
-        DataSituacaoEspecial: {DataSituacaoEspecial}
-        ".Trim();
+Id: {_id}
+CnpjBase: {CnpjBase}
+CnpjOrdem: {CnpjOrdem}
+CnpjDV: {CnpjDV}
+MatrizFilial: {MatrizFilial}
+NomeFantasia: {NomeFantasia}
+SituacaoCadastral: {SituacaoCadastral}
+DataSituacaoCadastral: {DataSituacaoCadastral}
+MotivoSituacaoCadastral: {MotivoSituacaoCadastral}
+CidadeExterior: {CidadeExterior}
+Pais: {Pais}
+DataInicioAtividade: {DataInicioAtividade}
+CnaePrincipal: {CnaePrincipal}
+CnaeSecundario: {string.Join(", ", CnaeSecundario)}
+TipoLogradouro: {TipoLogradouro}
+Logradouro: {Logradouro}
+Numero: {Numero}
+Complemento: {Complemento}
+Bairro: {Bairro}
+CEP: {CEP}
+UF: {UF}
+Municipio: {Municipio}
+Ddd1: {Ddd1}
+Telefone1: {Telefone1}
+Ddd2: {Ddd2}
+Telefone2: {Telefone2}
+DddFAX: {DddFAX}
+FAX: {FAX}
+CorreioEletronico: {CorreioEletronico}
+SituacaoEspecial: {SituacaoEspecial}
+DataSituacaoEspecial: {DataSituacaoEspecial}
+".Trim();
     }
-
 }
