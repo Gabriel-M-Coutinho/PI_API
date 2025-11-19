@@ -28,6 +28,11 @@ namespace PI_API.services
             switch (headers["Empresas"][headerIdx])
             {
                 case "CapitalSocial":
+                    if (fieldSpan.IsEmpty)
+                    {
+                        doc["CapitalSocial"] = (double)0;
+                        return;
+                    }
                     doc["CapitalSocial"] = ParseLatin1Double(fieldSpan);
                     break;
                 default:
@@ -44,13 +49,17 @@ namespace PI_API.services
                 case "DataSituacaoEspecial":
                     doc[headers["Estabelecimentos"][headerIdx]] = fieldSpan.IndexOfAnyExcept((byte)'0') == -1 ? new DateTime(1, 1, 1) : StringToDateTime(fieldSpan);
                     break;
-                case "FaixaEtaria":
-                //case "Numero":
-                //case "Ddd1":
-                //case "Ddd2":
-                //case "DddFAX":
+                /*case "Numero":
+                case "Ddd1":
+                case "Ddd2":
+                case "DddFAX":
+                    if (fieldSpan.IsEmpty)
+                    {
+                        doc[headers["Estabelecimentos"][headerIdx]] = 0;
+                        return;
+                    }
                     doc[headers["Estabelecimentos"][headerIdx]] = Latin1BytesToInt(fieldSpan);
-                    break;
+                    break;*/
                 case "CnaeSecundario":
                     if(fieldSpan.IsEmpty)
                     {
@@ -74,6 +83,11 @@ namespace PI_API.services
                     break;
                 case "IdentificadorSocio":
                 case "FaixaEtaria":
+                    if (fieldSpan.IsEmpty)
+                    {
+                        doc[headers["Socios"][headerIdx]] = 0;
+                        return;
+                    }
                     doc[headers["Socios"][headerIdx]] = Latin1BytesToInt(fieldSpan);
                     break;
                 default:

@@ -293,11 +293,6 @@ namespace PI_API.services
                 void addFieldToDocument(ReadOnlySpan<byte> line, int start, int end, int headerIdx)
                 {
                     ReadOnlySpan<byte> fieldSpan = line.Slice(start + 1, (end - start) - 2);
-                    if (fieldSpan.IsEmpty)
-                    {
-                        doc[thisHeaderCollection[headerIdx]] = Latin1Encoding.GetString(fieldSpan);
-                        return;
-                    }
                     try
                     {
                         switch (fileName)

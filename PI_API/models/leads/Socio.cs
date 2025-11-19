@@ -18,9 +18,9 @@ public class Socio
     public string RepresentanteLegal { get; set; }
     public string NomeRepresentante { get; set; }
     public string QualificacaoResponsavel { get; set; }
-    public string FaixaEtaria { get; set; }
+    public int FaixaEtaria { get; set; }
 
-    public Socio(string cnpjBase, string identificadorSocio, string nomeSocio, string cnpjCpf, string qualificacaoSocio, DateTime? dataEntradaSociedade, string pais, string representanteLegal, string nomeRepresentante, string qualificacaoResponsavel, string faixaEtaria)
+    public Socio(string cnpjBase, string identificadorSocio, string nomeSocio, string cnpjCpf, string qualificacaoSocio, DateTime? dataEntradaSociedade, string pais, string representanteLegal, string nomeRepresentante, string qualificacaoResponsavel, int faixaEtaria)
     {
         CnpjBase = cnpjBase;
         IdentificadorSocio = identificadorSocio;

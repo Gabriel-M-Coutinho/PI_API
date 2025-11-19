@@ -45,19 +45,23 @@ namespace PI_API.controllers
                 var key = param.Key.ToLower();
                 var value = param.Value.ToString();
 
-                Console.WriteLine(value);
+                Console.WriteLine(value.ToUpper());
                 switch (key)
                 {
                     case "nomefantasia":
                         filters.Add(builder.Eq("NomeFantasia", value));
                         break;
-
                     case "cnae":
                         filters.Add(builder.Eq("CnaePrincipal", value)); ;
                         break;
 
                     case "situacaocadastral":
-                        filters.Add(builder.Eq("SituacaoCadastral", SituacaoCadastral[value]));
+                        if (SituacaoCadastral.ContainsKey(value.ToUpper()))
+                        {
+                            filters.Add(builder.Eq("SituacaoCadastral", SituacaoCadastral[value.ToUpper()]));
+                            break;
+                        }
+                        Console.WriteLine($"{value.ToUpper()} não é um valor válido para situacaoCadastral");
                         break;
                     default:
                         // ignorar params desconhecidos
@@ -69,12 +73,7 @@ namespace PI_API.controllers
                 ? builder.And(filters)
                 : builder.Empty;
 
-            var results = await collection.Find(_ => true).Limit(5).ToListAsync();
-            Console.WriteLine(results.Count());
-            foreach(var result in results)
-            {
-                Console.WriteLine(result.ToString());
-            }
+            var results = await collection.Find(finalFilter).ToListAsync();
             return Ok(results.ToJson());
         }
     }

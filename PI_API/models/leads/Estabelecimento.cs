@@ -20,7 +20,7 @@ public class Estabelecimento
     public string Pais { get; set; }
     public DateTime? DataInicioAtividade { get; set; }
     public string CnaePrincipal { get; set; }
-    public List<string> CnaeSecundario { get; set; }
+    public BsonArray CnaeSecundario { get; set; }
     public string TipoLogradouro { get; set; }
     public string Logradouro { get; set; }
     public string Numero { get; set; }
@@ -39,7 +39,7 @@ public class Estabelecimento
     public string SituacaoEspecial { get; set; }
     public DateTime? DataSituacaoEspecial { get; set; }
 
-    public Estabelecimento(string cnpjBase, string cnpjOrdem, string cnpjDV, string matrizFilial, string nomeFantasia, string situacaoCadastral, DateTime? dataSituacaoCadastral, string motivoSituacaoCadastral, string cidadeExterior, string pais, DateTime? dataInicioAtividade, string cnaePrincipal, List<string> cnaeSecundario, string tipoLogradouro, string logradouro, string numero, string complemento, string bairro, string cEP, string uF, string municipio, string ddd1, string telefone1, string ddd2, string telefone2, string dddFAX, string fAX, string correioEletronico, string situacaoEspecial, DateTime? dataSituacaoEspecial)
+    public Estabelecimento(string cnpjBase, string cnpjOrdem, string cnpjDV, string matrizFilial, string nomeFantasia, string situacaoCadastral, DateTime? dataSituacaoCadastral, string motivoSituacaoCadastral, string cidadeExterior, string pais, DateTime? dataInicioAtividade, string cnaePrincipal, BsonArray cnaeSecundario, string tipoLogradouro, string logradouro, string numero, string complemento, string bairro, string cEP, string uF, string municipio, string ddd1, string telefone1, string ddd2, string telefone2, string dddFAX, string fAX, string correioEletronico, string situacaoEspecial, DateTime? dataSituacaoEspecial)
     {
         CnpjBase = cnpjBase;
         CnpjOrdem = cnpjOrdem;
