@@ -140,10 +140,10 @@ namespace PI_API.controllers
                         {
                             try
                             {
-                                switch (value.Count(c => c == '-'))
+                                switch (value.Count(c => c == ':'))
                                 {
                                     case 1:
-                                        var dateRange = value.Split('-');
+                                        var dateRange = value.Split(':');
                                         var dateStart = StringToDateTime(dateRange[0]);
                                         var dateEnd = StringToDateTime(dateRange[1]);
                                         valuesList.Add(builder.And(builder.Gte("DataInicioAtividade", dateStart), builder.Lte("DataInicioAtividade", dateEnd)));
@@ -158,25 +158,59 @@ namespace PI_API.controllers
                         }
                         break;
 
-                    case "capitalsocial":
+                    case "capitalsocial": //tá em outra tabela
+                        foreach (var value in values)
+                        {
+                            try
+                            {
+                                var capitalString = value.Replace(',', '.');
+                                switch (capitalString.Count(c => c == ':'))
+                                {
+                                    case 1:
+                                        var capitalRange = capitalString.Split(':');
+                                        List<FilterDefinition<Estabelecimento>> capitalList = new();
+                                        if (capitalRange[0].Count() > 0)
+                                            capitalList.Add(builder.Gte("CapitalSocial", double.Parse(capitalRange[0])));
+                                        if (capitalRange[1].Count() > 0)
+                                            capitalList.Add(builder.Lte("CapitalSocial", double.Parse(capitalRange[1])));
+                                        if(capitalList.Count() > 0)
+                                            valuesList.Add(builder.And(capitalList));
+                                        break;
+                                    case 0:
+                                        var capital = double.Parse(capitalString);
+                                        valuesList.Add(builder.Gte("CapitalSocial", capital));
+                                        break;
+                                }
+                            }
+                            catch (Exception) { }
+                        }
                         break;
 
                     case "mei":
                         break;
-                    case "matriz":
+
+                    case "matrizfilial":
+                        switch (values[0].ToLower())
+                        {
+                            case "matriz":
+                            case "1":
+                            case "01":
+                                filters.Add(builder.Eq("MatrizFilial", "1"));
+                                break;
+                            case "filial":
+                            case "2":
+                            case "02":
+                                filters.Add(builder.Eq("MatrizFilial", "2"));
+                                break;
+                        }
                         break;
-                    case "filial":
-                        break;
+
                     case "page":
                         break; 
                     case "pageSize":
                         break;
                     default:
                         break;
-                }
-                foreach (var valuesA in valuesList)
-                {
-                    Console.WriteLine(valuesList);
                 }
                 if(valuesList.Count() > 0)
                     filters.Add(builder.Or(valuesList));
