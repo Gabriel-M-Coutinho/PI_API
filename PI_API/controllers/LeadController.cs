@@ -31,8 +31,17 @@ namespace PI_API.controllers
             ["INAPTA"] = "04",
             ["BAIXADA"] = "08"
         };
-        
-        
+        private DateTime StringToDateTime(string date)
+        {
+            if (date.Count(c => c == '/') != 2)
+                throw new Exception();
+            var dateSplited = date.Split('/');
+            if (dateSplited[0].Count() == 2 && dateSplited[1].Count() == 2 && dateSplited[2].Count() == 4)
+            {
+                return new DateTime(Int32.Parse(dateSplited[2]), Int32.Parse(dateSplited[1]), Int32.Parse(dateSplited[0]));
+            }
+            throw new Exception();
+        }
         
         [HttpGet]
         public async Task<IActionResult> Search()
@@ -48,31 +57,129 @@ namespace PI_API.controllers
 
             foreach (var param in query)
             {
+                List<FilterDefinition<Estabelecimento>> valuesList = new();
                 var key = param.Key.ToLower();
-                var value = param.Value.ToString();
+                var values = param.Value.ToString().Split(';');
 
                 switch (key)
                 {
                     case "nomefantasia":
-                        filters.Add(builder.Eq("NomeFantasia", value));
-                        break;
-
-                    case "cnae":
-                        filters.Add(builder.Eq("CnaePrincipal", value));
-                        break;
-
-                    case "situacaocadastral":
-                        if (SituacaoCadastral.ContainsKey(value.ToUpper()))
+                    case "razaosocial":
+                        foreach (var value in values)
                         {
-                            filters.Add(builder.Eq("SituacaoCadastral", SituacaoCadastral[value.ToUpper()]));
+                            valuesList.Add(builder.Eq("NomeFantasia", value));
                         }
                         break;
 
+                    case "cnae":
+                    case "cnaes":
+                    case "atividade":
+                    case "atividades":
+                        foreach (var value in values)
+                        {
+                            valuesList.Add(builder.Eq("CnaePrincipal", value));
+                            valuesList.Add(builder.Eq("CnaeSecundario", value)); // dar a opção de incluir ou não cnaes secundários
+                        }
+                        break;
+
+                    case "naturezajuridica":
+                        break;
+
+                    case "situacaocadastral":
+                        foreach (var value in values)
+                        {
+                            if (SituacaoCadastral.ContainsKey(value.ToUpper()))
+                            {
+                                valuesList.Add(builder.Eq("SituacaoCadastral", SituacaoCadastral[value.ToUpper()]));
+                            }
+                        }
+                        break;
+
+                    case "estado":
+                    case "uf":
+                        foreach (var value in values)
+                        {
+                            valuesList.Add(builder.Eq("UF", value));
+                        }
+                        break;
+
+                    case "municipio":
+                        foreach (var value in values)
+                        {
+                            valuesList.Add(builder.Eq("Municipio", value));
+                        }
+                        break;
+
+                    case "bairro":
+                        foreach (var value in values)
+                        {
+                            valuesList.Add(builder.Eq("Bairro", value));
+                        }
+                        break;
+
+                    case "cep":
+                        foreach (var value in values)
+                        {
+                            valuesList.Add(builder.Eq("CEP", value));
+                        }
+                        break;
+
+                    case "ddd":
+                        foreach (var value in values)
+                        {
+                            valuesList.Add(builder.Eq("Ddd1", value));
+                            valuesList.Add(builder.Eq("Ddd2", value));
+                            valuesList.Add(builder.Eq("Ddd3", value));
+                        }
+                        break;
+
+                    case "dataabertura":
+                    case "datadeabertura":
+                    case "datainicioatividade":
+                        foreach (var value in values)
+                        {
+                            try
+                            {
+                                switch (value.Count(c => c == '-'))
+                                {
+                                    case 1:
+                                        var dateRange = value.Split('-');
+                                        var dateStart = StringToDateTime(dateRange[0]);
+                                        var dateEnd = StringToDateTime(dateRange[1]);
+                                        valuesList.Add(builder.And(builder.Gte("DataInicioAtividade", dateStart), builder.Lte("DataInicioAtividade", dateEnd)));
+                                        break;
+                                    case 0:
+                                        var date = StringToDateTime(value);
+                                        valuesList.Add(builder.Gte("DataInicioAtividade", date));
+                                        break;
+                                }
+                            }
+                            catch (Exception) { }
+                        }
+                        break;
+
+                    case "capitalsocial":
+                        break;
+
+                    case "mei":
+                        break;
+                    case "matriz":
+                        break;
+                    case "filial":
+                        break;
                     case "page":
                         break; 
                     case "pageSize":
-                        break; 
+                        break;
+                    default:
+                        break;
                 }
+                foreach (var valuesA in valuesList)
+                {
+                    Console.WriteLine(valuesList);
+                }
+                if(valuesList.Count() > 0)
+                    filters.Add(builder.Or(valuesList));
             }
 
             var finalFilter = filters.Count > 0

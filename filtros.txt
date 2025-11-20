@@ -1,0 +1,31 @@
+Qualidades dos Filtros:
+- pode ser inclusivo ou exclusivo
+- pode ter vários, só separar por ponto e virgula
+- Permitir alguns por código ou valor
+- caso filtro estiver inválido tem que dar algum exception e avisa-lo pela própria api
+- função not
+
+Busca em estágios: permitir a busca em cima de busca
+
+Filtros:
+- RazaoSocial/NomeFantasia
+- AtividadePrincipal/CnaePrincipal (CNAE)
+- AtividadeSecundaria/AtividadesSecundarias/CnaeSecundario/CnaesSecundarios
+	- inclusivo/exclusivo
+	- or/and
+- NaturezaJuridica
+- SituacaoCadastral
+- Estado
+- Municipio
+- Bairro
+- CEP
+- DDD
+- DataAbertura (Range): i01/01/2001-31/12/2020;20/09/2025(aqui vai ser a partir de);-31/12/2027(aqui vai ser até)
+- CapitalSocial (Range): 0.52-100
+	- pode ter valor negátivo
+- MEI (true/false)
+	- não tem separação por ponto e virgula
+- Matriz (true/false)
+	- não tem separação por ponto e virgula
+- Filial (true/false)
+	- não tem separação por ponto e virgula
