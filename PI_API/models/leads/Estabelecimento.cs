@@ -8,7 +8,6 @@ public class Estabelecimento
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     public string _id { get; set; }
-
     public string CnpjBase { get; set; }
     public string CnpjOrdem { get; set; }
     public string CnpjDV { get; set; }

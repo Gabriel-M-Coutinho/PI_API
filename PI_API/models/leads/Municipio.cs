@@ -6,7 +6,7 @@ namespace PI_API.models.leads;
 public class Municipio
 {
     [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
+    //[BsonRepresentation(BsonType.ObjectId)]   comentei porque na hora de tentar usar o LeadsGraph o ID não é um ObjectId
     public string _id { get; set; }
     public string Descricao { get; set; }
 

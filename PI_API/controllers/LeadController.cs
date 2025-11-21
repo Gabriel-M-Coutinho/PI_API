@@ -2,12 +2,14 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using MongoDbGenericRepository;
 using PI_API.dto;
 using PI_API.models;
 using PI_API.models.leads;
 using PI_API.services;
+using System.Text.Json;
 
 namespace PI_API.controllers
 {
@@ -243,6 +245,45 @@ namespace PI_API.controllers
             };
 
             return Ok(response);
+        }
+
+        [HttpGet("LeadsGraph")]
+        public async Task<IActionResult> LeadsGraph()
+        {
+            // Gráfico: Quantidade de estabelecimentos por município
+
+            // Busca o total por código do município
+            var totalPorMunicipio = await _context.Estabelecimento.Aggregate()
+                .Group(e => e.Municipio, g => new
+                {
+                    MunicipioId = g.Key,
+                    Quantidade = g.Count()
+                })
+                .SortByDescending(x => x.Quantidade)
+                .Limit(5)
+                .ToListAsync();
+
+            // Busca os nomes dos municípios
+            var municipioIds = totalPorMunicipio.Select(t => t.MunicipioId).ToList();
+            var municipios = await _context.Municipio
+                .Find(m => municipioIds.Contains(m._id))
+                .ToListAsync();
+
+            // Combina ambos
+            var resultado = totalPorMunicipio.Select(total => new
+            {
+                municipio = municipios.FirstOrDefault(m => m._id == total.MunicipioId)?.Descricao ?? total.MunicipioId,
+                quantidade = total.Quantidade
+            })
+            .OrderByDescending(x => x.quantidade)
+            .ToList();
+
+            if (!resultado.Any())
+            {
+                return Ok(new { message = "Nenhum dado encontrado" });
+            }
+
+            return Ok(resultado);
         }
     }
 }
