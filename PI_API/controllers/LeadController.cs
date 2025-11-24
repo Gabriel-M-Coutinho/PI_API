@@ -285,5 +285,31 @@ namespace PI_API.controllers
 
             return Ok(resultado);
         }
+        
+        
+        [HttpGet("{cnpj}")]
+        public async Task<IActionResult> GetByCnpj(string cnpj)
+        {
+            cnpj = new string(cnpj.Where(char.IsDigit).ToArray());
+
+            if (cnpj.Length != 14)
+                return BadRequest(new { success = false, message = "CNPJ inválido." });
+
+            var cnpjBase = cnpj.Substring(0, 8);
+            var cnpjOrdem = cnpj.Substring(8, 4);
+            var cnpjDV = cnpj.Substring(12, 2);
+
+            var lead = await _context.Estabelecimento.Find(e =>
+                    e.CnpjBase == cnpjBase &&
+                    e.CnpjOrdem == cnpjOrdem &&
+                    e.CnpjDV == cnpjDV  
+            ).FirstOrDefaultAsync();
+
+            if (lead == null)
+                return NotFound(new { success = false, message = "Lead não encontrado." });
+
+            return Ok(new { success = true, data = lead });
+        }
+
     }
 }

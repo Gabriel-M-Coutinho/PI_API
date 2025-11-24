@@ -10,7 +10,7 @@
 
         protected override async Task ExecuteJob(CancellationToken stoppingToken)
         {
-            await _importerService.Start();
+           // await _importerService.Start();
             _dateScheduled = _dateScheduled.AddMonths(1);
         }
 

@@ -26,6 +26,7 @@ namespace PI_API.controllers
         [HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] LoginDTO loginDto)
         {
+            
             var user = await _userService.GetByEmail(loginDto.Username);
 
             if (user == null) return Unauthorized("Usuário não encontrado.");

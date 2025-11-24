@@ -32,7 +32,8 @@ using PI_API.models;
 
         public async Task<ApplicationUser?> GetByEmail(string email)
         {
-            return await _userManager.FindByEmailAsync(email);
+            string normalized = _userManager.NormalizeEmail(email);
+            return await _usersCollection.Find(u => u.NormalizedEmail == normalized).FirstOrDefaultAsync();
         }
 
         public async Task<IdentityResult> CreateAsync(ApplicationUser user)
