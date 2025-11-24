@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Configuration;
+using PI_API.models.leads;
 using PI_API.settings;
 using SharpCompress.Common;
 using SharpCompress.Writers;
@@ -113,6 +114,20 @@ namespace PI_API.services
             sw.Stop();
             Console.WriteLine("# ReceitaImporter Finalizado #");
             Console.WriteLine($"Tempo Decorrido: {sw.Elapsed.Hours}h {sw.Elapsed.Minutes}m {sw.Elapsed.Seconds}s {sw.Elapsed.Milliseconds}ms");
+            await CreateIndexes();
+        }
+
+        public async Task CreateIndexes()
+        {
+            var collection = mongoDatabase.GetCollection<Estabelecimento>("Estabelecimentos");
+            var indexKeys = Builders<Estabelecimento>.IndexKeys;
+            List<IndexKeysDefinition<Estabelecimento>> indexList = [indexKeys.Ascending(e => e.Bairro), indexKeys.Ascending(e => e.CEP), indexKeys.Ascending(e => e.CnaePrincipal), indexKeys.Ascending(e => e.CnaeSecundario), indexKeys.Ascending(e => e.DataInicioAtividade), indexKeys.Ascending(e => e.Ddd1), indexKeys.Ascending(e => e.MatrizFilial), indexKeys.Ascending(e => e.Municipio), indexKeys.Ascending(e => e.NomeFantasia), indexKeys.Ascending(e => e.UF)]; 
+            foreach(var index in indexList) 
+            {
+                await collection.Indexes.CreateOneAsync(new CreateIndexModel<Estabelecimento>(index));
+            }
+            Console.WriteLine("Indices Criados com sucesso!");
+            
         }
 
         private async Task ProcessFile(string fileName)
@@ -123,6 +138,9 @@ namespace PI_API.services
         - Fará o Controle dinámico dos produtores e consumidores com base nos recursos disponiveis durante a execução (adição ou retiragem)
         - Adicionar/Retirar trabalhadores com base na necessidade, se quem estiver causando o gargalo for o banco adicionar mais no banco*/
         {
+            using var cts = new CancellationTokenSource();
+            var token = cts.Token;
+
             List<string> ErrorLines = new List<string>();
             var file = baseUrl + DateTime.Now.ToString("yyyy-MM") + @"\" + fileName + ".zip";
             var channelOptions = new BoundedChannelOptions(50000) { FullMode = BoundedChannelFullMode.Wait }; //quando encher, começar a escrever no disco para não atrapalhar o download, ou alguma outra etapa
@@ -159,24 +177,26 @@ namespace PI_API.services
 
             for (int i = 0; i < 1; i++)
             {
-                downloaders.Add(Downloader(DataDownload.Writer));
+                downloaders.Add(Downloader(DataDownload.Writer, token));
             }
             for (int i = 0; i < 3; i++)
             {
-                processors.Add(Processor(DataDownload.Reader, DataProcess.Writer));
+                processors.Add(Processor(DataDownload.Reader, DataProcess.Writer, token));
             }
 
             var opts = new InsertManyOptions { IsOrdered = false };
             var collection = mongoDatabase.GetCollection<BsonDocument>(fileName);
+            int collectionSize = 0;
             for (int i = 0; i < 1; i++)
             {
-                importers.Add(Importer(DataProcess.Reader));
+                importers.Add(Importer(DataProcess.Reader, token));
             }
             await Task.WhenAll(downloaders);
             DataDownload.Writer.Complete();
             await Task.WhenAll(processors);
             DataProcess.Writer.Complete();
             await Task.WhenAll(importers);
+
             sw.Stop();
             Console.WriteLine($"Arquivo {fileName} Importado com Sucesso em {sw.Elapsed.Hours}h {sw.Elapsed.Minutes}m {sw.Elapsed.Seconds}s {sw.Elapsed.Milliseconds}ms!");
 
@@ -192,7 +212,7 @@ namespace PI_API.services
                 Console.WriteLine($"Arquivo ErrorLines{fileName}.txt criado/atualizado");
             }
 
-            async Task Downloader(ChannelWriter<byte[]> writer)
+            async Task Downloader(ChannelWriter<byte[]> writer, CancellationToken token)
             /* [Downloader]
             - Produtor do Canal DataDownload
             - Irá realizar o download dos arquivos armazenando na RAM em Stream
@@ -202,47 +222,58 @@ namespace PI_API.services
             (só terá mais se tiver mais recurso disponivel mesmo baixando 3 arquivos simultaneamente)*/
             {
                 byte[] buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
-
-                await using var zipStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-                using var zipInputStream = new ZipInputStream(zipStream);
-                zipInputStream.IsStreamOwner = false;
-
-                ZipEntry entry;
-                while ((entry = zipInputStream.GetNextEntry()) != null)
+                try
                 {
-                    if (!entry.IsFile) continue;
-                    Console.WriteLine($"Lendo: {entry.Name}");
+                    await using var zipStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                    using var zipInputStream = new ZipInputStream(zipStream);
+                    zipInputStream.IsStreamOwner = false;
 
-                    int bytesRead;
-                    int totalChunk;
-                    int remaning = 0;
-
-                    // utilizar o PipeReader invés do ReadAsync (pesquisar mais sobre)
-                    while ((bytesRead = await zipInputStream.ReadAsync(buffer, remaning, BufferSize - remaning)) > 0)
+                    ZipEntry entry;
+                    while ((entry = zipInputStream.GetNextEntry()) != null)
                     {
-                        buffer.AsSpan(remaning + bytesRead).Clear(); //tem que ver se está certo
-                        totalChunk = buffer.AsSpan().LastIndexOf((byte)'\n') + 1; //quantidade, mas tbm significa o inicio da ultima linha
-                        // Copia apenas os dados lidos em um novo buffer
-                        byte[] chunk = ArrayPool<byte>.Shared.Rent(totalChunk); //pega um array com a quantidade do totalChunk
-                        chunk.AsSpan(totalChunk).Clear(); //limpa o restante que veio do array pool
+                        if (!entry.IsFile) continue;
+                        Console.WriteLine($"Lendo: {entry.Name}");
 
-                        buffer.AsSpan(0, totalChunk).CopyTo(chunk); //transforma o buffer em uma view do 0 até o ultimo \n, já que aqui é o count, e não indice, e manda para chunk
-                        // Envia para o canal
-                        await writer.WriteAsync(chunk);
-                        remaning = buffer.Length - totalChunk;
-                        buffer.AsSpan(totalChunk, remaning).CopyTo(buffer);
-                        buffer.AsSpan(remaning + 1).Clear();
+                        int bytesRead;
+                        int totalChunk;
+                        int remaning = 0;
+
+                        // utilizar o PipeReader invés do ReadAsync (pesquisar mais sobre)
+                        while ((bytesRead = await zipInputStream.ReadAsync(buffer, remaning, BufferSize - remaning)) > 0)
+                        {
+                            if (token.IsCancellationRequested) return;
+
+                            buffer.AsSpan(remaning + bytesRead).Clear(); //tem que ver se está certo
+                            totalChunk = buffer.AsSpan().LastIndexOf((byte)'\n') + 1; //quantidade, mas tbm significa o inicio da ultima linha
+                                                                                      // Copia apenas os dados lidos em um novo buffer
+                            byte[] chunk = ArrayPool<byte>.Shared.Rent(totalChunk); //pega um array com a quantidade do totalChunk
+                            chunk.AsSpan(totalChunk).Clear(); //limpa o restante que veio do array pool
+
+                            buffer.AsSpan(0, totalChunk).CopyTo(chunk); //transforma o buffer em uma view do 0 até o ultimo \n, já que aqui é o count, e não indice, e manda para chunk
+                                                                        // Envia para o canal
+
+                            await writer.WriteAsync(chunk);
+                            remaning = buffer.Length - totalChunk;
+                            buffer.AsSpan(totalChunk, remaning).CopyTo(buffer);
+                            buffer.AsSpan(remaning + 1).Clear();
+                        }
                     }
+                }
+                catch (OperationCanceledException) { /* cooperative cancellation */ }
+                finally
+                {
                     ArrayPool<byte>.Shared.Return(buffer);
                 }
             }
 
             async Task Processor(ChannelReader<byte[]> reader,
-                     ChannelWriter<BsonDocument> writer)
+                     ChannelWriter<BsonDocument> writer, CancellationToken token)
             {
                 int fullLine;
+                try {
                 await foreach (var chunk in reader.ReadAllAsync())
                 {
+                    if (token.IsCancellationRequested) break;
                     ReadOnlyMemory<byte> chunkMemory = chunk;
                     while ((fullLine = chunkMemory.Span.IndexOf((byte)'\n')) >= 0)
                     {
@@ -264,6 +295,8 @@ namespace PI_API.services
                     }
                     ArrayPool<byte>.Shared.Return(chunk);
                 }
+                }
+                catch (OperationCanceledException) { }
             }
             BsonDocument ParseCsvLine(ReadOnlySpan<byte> line)
             {
@@ -322,27 +355,40 @@ namespace PI_API.services
                 }
             }
 
-            async Task Importer(ChannelReader<BsonDocument> reader)
+            
+            async Task Importer(ChannelReader<BsonDocument> reader, CancellationToken token)
             /* [Importer]
             - Consumidor do Canal DataProcess
             - Irá realizar a importação dos Bson Document para o MongoDB
             - Provavel que terá mais de um para esse processo*/
             {
                 List<BsonDocument> batch = new();
-
+                try {
                 await foreach (var doc in reader.ReadAllAsync())
                 {
+                    //Console.WriteLine(fileName);
+                    if (collectionSize >= 1000000)
+                    {
+                        // stop everything:
+                        cts.Cancel();                 // signal cancellation
+                        DataProcess.Writer.Complete(); // close pipes (only once - see below)
+                        DataDownload.Writer.Complete();
+                        return;
+                    }
+
                     batch.Add(doc);
                     if (batch.Count >= batchSize)
                     {
                         //Console.WriteLine("Vou inserir");
                         await collection.InsertManyAsync(batch, opts);
                         batch.Clear();
+                        collectionSize += batchSize;
                     }
                 }
-
                 if (batch.Count > 0)
                     await collection.InsertManyAsync(batch);
+                }
+                catch (OperationCanceledException) { }
             }
         }
 
@@ -350,8 +396,9 @@ namespace PI_API.services
         {
             Console.WriteLine("|=====| INICIANDO LIMPEZA DO BANCO DE DADOS |=====|");
             string[] collectionNames = ["Cnaes", "Empresas", "Estabelecimentos", "Motivos", "Municipios", "Naturezas", "Paises", "Qualificacoes", "Simples", "Socios"];
+            var colectionsDatabase = mongoDatabase.ListCollectionNames().ToList();
 
-            if (!collectionNames.Any())
+            if (!colectionsDatabase.Any(e => collectionNames.Contains(e)))
             {
                 Console.WriteLine("Nenhuma coleção encontrada para apagar.");
             }
@@ -359,12 +406,18 @@ namespace PI_API.services
             {
                 foreach (var collectionName in collectionNames)
                 {
-                    Console.WriteLine($" - Apagando coleção: {collectionName}");
-                    await mongoDatabase.DropCollectionAsync(collectionName);
+                    try
+                    {
+                        Console.WriteLine($" - Apagando coleção: {collectionName}");
+                        await mongoDatabase.DropCollectionAsync(collectionName);
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine("Não deu para apagar a Collection " + collectionName);
+                    }
                 }
             }
-            Console.WriteLine("|=====| LIMPEZA DO BANCO DE DADOS CONCLUÍDA |=====|");
-            Console.WriteLine();
+            Console.WriteLine("|=====| LIMPEZA DO BANCO DE DADOS CONCLUÍDA |=====|\n");
         }
 
         // CheckConnection
