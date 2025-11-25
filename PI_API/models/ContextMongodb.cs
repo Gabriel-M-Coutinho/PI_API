@@ -66,5 +66,13 @@ namespace PI_API.models
                 return _database.GetCollection<Municipio>("Municipios");
             }
         }
+        
+        public IMongoCollection<Order> Order
+        {
+            get
+            {
+                return _database.GetCollection<Order>("Orders");
+            }
+        }
     }//fim da classe
 }
