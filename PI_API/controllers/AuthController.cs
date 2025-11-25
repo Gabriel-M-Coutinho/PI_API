@@ -72,7 +72,7 @@ namespace PI_API.controllers
             });
         }
         [Authorize]
-        [HttpPost("chancePassword")]
+        [HttpPost("changePassword")]
         public async Task<ActionResult> ChancePassword([FromBody] ChangePasswordDTO dto)
         {
             if (dto.newPassword != dto.confirmPassword)
