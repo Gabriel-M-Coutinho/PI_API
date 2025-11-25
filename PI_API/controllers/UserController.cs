@@ -20,11 +20,13 @@ namespace PI_API.controllers;
 [ApiController]
 public class UserController : ControllerBase
 {
+    UserManager<ApplicationUser> _userManager;
     UserService _userService;
     EmailService _emailService;
 
-    public UserController(UserService userService, EmailService emailService)
+    public UserController(UserManager<ApplicationUser> userManager, UserService userService, EmailService emailService)
     {
+        _userManager = userManager;
         _userService = userService;
         _emailService = emailService;
     }
@@ -55,13 +57,18 @@ public class UserController : ControllerBase
         newUser.Email = userDto.Email;
         newUser.CpfCnpj = userDto.CpfCnpj;
         newUser.FullName = userDto.FullName;
-        newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password);
         newUser.CreatedAt = DateTime.Now;
         newUser.UpdatedAt = DateTime.Now;
         newUser.Active = true;
 
-        await _userService.CreateAsync(newUser);
+        var result = await _userManager.CreateAsync(newUser, userDto.Password);
 
+        if (result.Succeeded)
+        {
+            await _userManager.AddToRoleAsync(await _userService.GetByEmail(userDto.Email), nameof(ROLE.STANDARD));
+            return Ok("criado com sucesso, faca login agora");
+        }
+        return BadRequest(result.Errors);
         /*var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
         var confirmationLink = $"https://localhost:3000/confirm-email?userId={newUser.Id.ToString()}&token={Uri.EscapeDataString(token)}";
 
@@ -79,8 +86,6 @@ public class UserController : ControllerBase
                 Console.WriteLine($"Erro ao enviar e-mail: {ex.Message}");
             }
         });*/
-
-        return Ok("criado com sucesso, faca login agora");
     }
 
     [HttpGet]

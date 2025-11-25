@@ -1,4 +1,5 @@
 ﻿using LeadSearch.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -14,11 +15,13 @@ namespace PI_API.controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly UserService _userService;
         private readonly IConfiguration _configuration;
 
-        public AuthController(UserService userService, IConfiguration configuration)
+        public AuthController(UserManager<ApplicationUser> userManager, UserService userService, IConfiguration configuration)
         {
+            _userManager = userManager;
             _userService = userService;
             _configuration = configuration;
         }
@@ -33,7 +36,7 @@ namespace PI_API.controllers
 
             var roles = await _userService.GetRolesAsync(user);
 
-            bool validPassword = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
+            bool validPassword = await _userManager.CheckPasswordAsync(user, loginDto.Password);
             if (!validPassword) return Unauthorized("Senha incorreta.");
 
             // Cria uma lista de Claims, inicialmente apenas com uma claim com o ID do usuário
@@ -67,6 +70,30 @@ namespace PI_API.controllers
                 token = jwt,
                 expiration = token.ValidTo
             });
+        }
+        [Authorize]
+        [HttpPost("chancePassword")]
+        public async Task<ActionResult> ChancePassword([FromBody] ChangePasswordDTO dto)
+        {
+            if (dto.newPassword != dto.confirmPassword)
+            {
+                return BadRequest("Nova Senha tem que ser confirmada");
+            }
+            var user = await _userService.GetByIdAsync(User.FindFirst("userid")?.Value);
+            if (user == null)
+                return Unauthorized();
+
+            // Tenta trocar a senha
+            var result = await _userService.ChangePasswordAsync(
+                user,
+                dto.currentPassword,
+                dto.newPassword
+            );
+
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return Ok("Senha alterada com sucesso!");
         }
     }
 }
