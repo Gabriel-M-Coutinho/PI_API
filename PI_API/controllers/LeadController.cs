@@ -299,16 +299,57 @@ namespace PI_API.controllers
             var cnpjOrdem = cnpj.Substring(8, 4);
             var cnpjDV = cnpj.Substring(12, 2);
 
-            var lead = await _context.Estabelecimento.Find(e =>
-                    e.CnpjBase == cnpjBase &&
-                    e.CnpjOrdem == cnpjOrdem &&
-                    e.CnpjDV == cnpjDV  
-            ).FirstOrDefaultAsync();
+            LeadSearchDTO lead = await _context.Estabelecimento.Aggregate()
+            .Match(e =>
+                e.CnpjBase == cnpjBase &&
+                e.CnpjOrdem == cnpjOrdem &&
+                e.CnpjDV == cnpjDV
+            )
+            /*.Lookup( //é para vir um documento Empresa
+                foreignCollectionName: "Empresas",
+                localField: "CnpjBase",
+                foreignField: "CnpjBase",
+                @as: "Empresa"
+            )
+            .Unwind("Empresa")*/
+            .Lookup( //é para vir um documento Cnae (_id e descricao)
+                foreignCollectionName: "Cnaes",
+                localField: "CnaePrincipal",
+                foreignField: "_id",
+                @as: "realCnaePrincipal"
+            )
+            .Unwind("realCnaePrincipal")
+            .Lookup(//é para vir um array de documentos Cnaes (_id e descricao)
+                foreignCollectionName: "Cnaes",
+                localField: "CnaeSecundario",
+                foreignField: "_id",
+                @as: "realCnaeSecundario"
+            )
+            .Lookup(//é para vir um array de documentos tipo socio
+                foreignCollectionName: "Socios",
+                localField: "CnpjBase",
+                foreignField: "CnpjBase",
+                @as: "Socios"
+            )
+            /*.Lookup(//é para vir um documento do tipo Simples
+                foreignCollectionName: "Simples",
+                localField: "CnpjBase",
+                foreignField: "CnpjBase",
+                @as: "Simples"
+            )
+            .Unwind("Simples")
+            .Limit(1)*/
+            .As<LeadSearchDTO>()
+            .FirstOrDefaultAsync();
+
 
             if (lead == null)
+            {
+                Console.WriteLine("Deu ruim aqui");
                 return NotFound(new { success = false, message = "Lead não encontrado." });
+            }
 
-            return Ok(new { success = true, data = lead });
+            return Ok(new { success = true, data = lead});
         }
 
     }

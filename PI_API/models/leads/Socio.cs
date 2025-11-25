@@ -9,7 +9,7 @@ public class Socio
     [BsonRepresentation(BsonType.ObjectId)]
     public string _id { get; set; }
     public string CnpjBase { get; set; }
-    public string IdentificadorSocio { get; set; }
+    public int IdentificadorSocio { get; set; }
     public string NomeSocio { get; set; }
     public string CnpjCpf { get; set; }
     public string QualificacaoSocio { get; set; }
@@ -20,7 +20,7 @@ public class Socio
     public string QualificacaoResponsavel { get; set; }
     public int FaixaEtaria { get; set; }
 
-    public Socio(string cnpjBase, string identificadorSocio, string nomeSocio, string cnpjCpf, string qualificacaoSocio, DateTime? dataEntradaSociedade, string pais, string representanteLegal, string nomeRepresentante, string qualificacaoResponsavel, int faixaEtaria)
+    public Socio(string cnpjBase, int identificadorSocio, string nomeSocio, string cnpjCpf, string qualificacaoSocio, DateTime? dataEntradaSociedade, string pais, string representanteLegal, string nomeRepresentante, string qualificacaoResponsavel, int faixaEtaria)
     {
         CnpjBase = cnpjBase;
         IdentificadorSocio = identificadorSocio;
