@@ -108,28 +108,33 @@ public class UserController : ControllerBase
         return Ok(await _userService.GetByIdAsync(userId));
     }
 
-    [HttpDelete]
+    [HttpDelete("{password}")]
     [Authorize]
-    public async Task<ActionResult> Delete()
+    public async Task<ActionResult> Delete(string password)
     {
+        var deletedUser = await _userService.GetByIdAsync(User.FindFirst("userid")?.Value);
+        bool validPassword = await _userManager.CheckPasswordAsync(deletedUser, password);
+        if (!validPassword) return Unauthorized("Senha incorreta.");
         await _userService.DeleteAsync(User.FindFirst("userid")?.Value);
 
         return Ok();
     }
-    [HttpDelete("{id}")]
+    /*[HttpDelete("{id}")]
     [Authorize(Roles = "ADMIN")]
     public async Task<ActionResult> Delete(string id)
     {
         await _userService.DeleteAsync(id);
 
         return Ok();
-    }
+    }*/
     
     [HttpPut]
     [Authorize]
     public async Task<ActionResult> Update([FromBody] UserDTO userDto)
     {
         ApplicationUser? updatedUser = await _userService.GetByIdAsync(User.FindFirst("userid")?.Value);
+        bool validPassword = await _userManager.CheckPasswordAsync(updatedUser, userDto.Password);
+        if (!validPassword) return Unauthorized("Senha incorreta.");
 
         if (updatedUser == null) return BadRequest("User not found");
 
