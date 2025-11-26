@@ -166,11 +166,13 @@ public class PaymentsController : ControllerBase
         });
     }
 
-    [HttpGet("customer-orders/{customerId}")]
-    public async Task<ActionResult> GetCustomerOrders(string customerId)
+    [HttpGet("customer-orders")]
+    [Authorize]
+    public async Task<ActionResult> GetCustomerOrders()
     {
+        var userId = User.FindFirst("userid")?.Value;
         var orders = await _context.Order
-            .Find(o => o.CustomerId == customerId)
+            .Find(o => o.CustomerId == userId)
             .SortByDescending(o => o.CreatedAt)
             .ToListAsync();
 
