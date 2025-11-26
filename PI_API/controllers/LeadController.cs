@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
@@ -58,25 +59,23 @@ namespace PI_API.controllers
         [Authorize]
         public async Task<IActionResult> Search()
         {
-            // 1º - VERIFICAR CRÉDITOS ANTES DE QUALQUER COISA
             var userId = User.FindFirst("userid")?.Value; ;
-            ApplicationUser currentUser = null; // Mudei o nome para evitar conflito
 
-            if (!string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(userId)) return Unauthorized("Usuário não identificado.");
+
+            var currentUser = await _userManager.FindByIdAsync(userId);
+
+            if (currentUser == null) return Unauthorized("Usuário não encontrado.");
+
+            var creditosAtuais = await _creditService.GetUserCredits(userId);
+
+            if (creditosAtuais <= 0)
             {
-                Console.WriteLine("Entrei no primeiro IF");
-                currentUser = await _userManager.FindByIdAsync(userId);
-                var creditosAtuais = await _creditService.GetUserCredits(userId);
-
-                if (currentUser != null && creditosAtuais <= 0)
+                return BadRequest(new ResponseDTO
                 {
-                    Console.WriteLine("Entrei no segundo IF");
-                    return BadRequest(new ResponseDTO
-                    {
-                        Success = false,
-                        Message = "Você não tem créditos suficientes para visualizar leads."
-                    });
-                }
+                    Success = false,
+                    Message = "Você não tem créditos suficientes para visualizar leads."
+                });
             }
 
             var collection = _context.Estabelecimento;
@@ -85,8 +84,37 @@ namespace PI_API.controllers
             var filters = new List<FilterDefinition<Estabelecimento>>();
             var builder = Builders<Estabelecimento>.Filter;
 
-            int page = query.ContainsKey("page") ? int.Parse(query["page"]) : 1;
-            int pageSize = query.ContainsKey("pageSize") ? int.Parse(query["pageSize"]) : 20;
+            if (currentUser.CnpjsComprados != null && currentUser.CnpjsComprados.Any())
+            {
+                var exclusionFilters = new List<FilterDefinition<Estabelecimento>>();
+
+                foreach (var cnpjComprado in currentUser.CnpjsComprados)
+                {
+                    if (cnpjComprado.Length == 14)
+                    {
+                        var cnpjBase = cnpjComprado.Substring(0, 8);
+                        var cnpjOrdem = cnpjComprado.Substring(8, 4);
+                        var cnpjDV = cnpjComprado.Substring(12, 2);
+
+                        var cnpjFilter = builder.And(
+                            builder.Eq(e => e.CnpjBase, cnpjBase),
+                            builder.Eq(e => e.CnpjOrdem, cnpjOrdem),
+                            builder.Eq(e => e.CnpjDV, cnpjDV)
+                        );
+
+                        exclusionFilters.Add(builder.Not(cnpjFilter));
+                    }
+                }
+
+                if (exclusionFilters.Any())
+                {
+                    filters.Add(builder.And(exclusionFilters));
+                }
+            }
+
+            int quantity = query.ContainsKey("quantity") ? int.Parse(query["quantity"]) : 0;
+            // int page = query.ContainsKey("page") ? int.Parse(query["page"]) : 1;
+            // int pageSize = query.ContainsKey("pageSize") ? int.Parse(query["pageSize"]) : 20;
 
             foreach (var param in query)
             {
@@ -259,8 +287,8 @@ namespace PI_API.controllers
             // Aplicando paginação
             var results = await collection
                 .Find(finalFilter)
-                .Skip((page - 1) * pageSize)
-                .Limit(pageSize)
+                //.Skip((page - 1) * pageSize)
+                .Limit(quantity)
                 .ToListAsync();
 
             // 2º - REDUZIR CRÉDITOS APÓS A BUSCA
@@ -306,10 +334,10 @@ namespace PI_API.controllers
                 Success = true,
                 Message = "Busca realizada com sucesso.",
                 Data = results,
-                Page = page,
-                PageSize = pageSize,
-                TotalItems = totalItems,
-                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+                //Page = page,
+                //PageSize = pageSize,
+                TotalItems = totalItems
+                //TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
             };
 
             return Ok(response);
