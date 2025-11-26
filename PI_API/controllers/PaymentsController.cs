@@ -116,7 +116,7 @@ public class PaymentsController : ControllerBase
                     o => o.SessionId == dto.SessionId, 
                     update
                 );
-                _creditService.AddCredits(order.CustomerId,order.Credits);
+                await _creditService.AddCredits(order.CustomerId,order.Credits);
                 
                 return Ok(new { 
                     success = true,

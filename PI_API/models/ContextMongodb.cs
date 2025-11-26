@@ -34,7 +34,7 @@ namespace PI_API.models
         {
             get
             {
-                return _database.GetCollection<ApplicationUser>("User");
+                return _database.GetCollection<ApplicationUser>("Users");
             }
         }
         public IMongoCollection<Cnae> Cnae
