@@ -12,20 +12,6 @@ public class PayPalMethod
     public void CreateOrder(Order order)
     {
         client.BaseAddress = new Uri("https://api-m.sandbox.paypal.com");
-        var purchase_units = new List<object>();
-
-        foreach (var item in order.orderItems)
-        {
-            purchase_units.Add(new
-            {
-                amount = new
-                {
-                    currency_code = "BRL",
-                    value = item.quantity * item.price
-                },
-                description = item.name
-            });
-        }
 
         var orderData = new
         {
@@ -42,11 +28,21 @@ public class PayPalMethod
                     }
                 }
             },
-            purchase_units
+            purchase_units = new List<object>
+            {
+                new {
+                    amount = new {
+                        currency_code = "BRL",
+                        value = order.Price.ToString("F2")
+                    },
+                    description = order.PackageName
+                }
+            }
         };
 
         string json = JsonSerializer.Serialize(orderData);
         HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
         client.PostAsync("/orders", content);
     }
+
 };

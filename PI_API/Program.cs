@@ -18,9 +18,9 @@ namespace PI_API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            
+            Stripe.StripeConfiguration.ApiKey = builder.Configuration.GetValue<string>("Stripe:SecretKey");
             builder.Services.AddControllers();
-
+            
             // ScheduleService
             //builder.Services.AddHostedService<ScheduleService>();
             builder.Services.AddHostedService<ImporterScheduleService>();
