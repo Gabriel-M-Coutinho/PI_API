@@ -343,8 +343,8 @@ namespace PI_API.controllers
             return Ok(response);
         }
 
-        [HttpGet("LeadsGraph")]
-        public async Task<IActionResult> LeadsGraph()
+        [HttpGet("EstablishmentsGraph")]
+        public async Task<IActionResult> EstablishmentsGraph()
         {
             // Gráfico: Quantidade de estabelecimentos por município
 
@@ -381,8 +381,36 @@ namespace PI_API.controllers
 
             return Ok(resultado);
         }
-        
-        
+
+        [HttpGet("OrdersGraph")]
+        public async Task<IActionResult> OrdersGraph()
+        {
+            // Define o intervalo: últimas 24 horas
+            var since = DateTime.UtcNow.AddHours(-24);
+
+            // Agrupa por hora e conta a quantidade de pedidos pagos
+            var ordersByHour = await _context.Order.Aggregate()
+                .Match(o => o.CreatedAt >= since && o.IsPaid)
+                .Group(o => new { Hour = o.CreatedAt.AddHours(-3).Hour }, g => new
+                {
+                    Hour = g.Key.Hour,
+                    Count = g.Count()
+                })
+                .SortBy(x => x.Hour)
+                .ToListAsync();
+
+            // Garante que todas as horas existam no resultado (0-23)
+            var hours = Enumerable.Range(0, 24).ToList();
+            var result = hours.Select(h => new
+            {
+                hora = $"{h}:00",
+                quantidade = ordersByHour.FirstOrDefault(o => o.Hour == h)?.Count ?? 0
+            }).ToList();
+
+            return Ok(result);
+        }
+
+
         [HttpGet("{cnpj}")]
         public async Task<IActionResult> GetByCnpj(string cnpj)
         {

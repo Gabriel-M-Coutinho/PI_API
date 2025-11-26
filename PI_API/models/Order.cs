@@ -8,7 +8,7 @@ public class Order
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     public string Id { get; set; }
-    
+  
     public string SessionId { get; set; } // ID da sessão do Stripe
     public CreditPlan Plan { get; set; }
     public string PackageName { get; set; }
