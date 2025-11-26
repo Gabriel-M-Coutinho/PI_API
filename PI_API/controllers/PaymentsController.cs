@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using PI_API.Config;
 using PI_API.dto;
 using PI_API.models;
+using PI_API.services;
 using Stripe.Checkout;
 using Stripe;
 
@@ -14,14 +16,17 @@ public class PaymentsController : ControllerBase
 {
     private readonly IConfiguration _configuration;
     private readonly ContextMongodb _context;
+    private readonly CreditService _creditService;
 
-    public PaymentsController(IConfiguration configuration, ContextMongodb context)
+    public PaymentsController(IConfiguration configuration, ContextMongodb context,CreditService creditService)
     {
+        _creditService = creditService;
         _configuration = configuration;
         _context = context;
     }
 
     [HttpPost("create-checkout")]
+    [Authorize]
     public async Task<ActionResult> CreateCheckout([FromBody] CheckoutDTO dto)
     {
         if (!CreditPlans.Plans.TryGetValue(dto.Plan, out var planData))
@@ -111,9 +116,7 @@ public class PaymentsController : ControllerBase
                     o => o.SessionId == dto.SessionId, 
                     update
                 );
-
-                // TODO: Adicionar créditos ao usuário aqui
-                // Exemplo: await AddCreditsToUser(order.CustomerId, order.Credits);
+                _creditService.AddCredits(order.CustomerId,order.Credits);
                 
                 return Ok(new { 
                     success = true,

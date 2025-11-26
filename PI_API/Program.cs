@@ -26,6 +26,7 @@ namespace PI_API
             builder.Services.AddHostedService<ImporterScheduleService>();
             builder.Services.AddHostedService<BackupScheduleService>();
 
+
             //  MONGODB SETTINGS
             builder.Services.Configure<MongoDbSettings>(
                 builder.Configuration.GetSection("MongoDbSettings"));
@@ -41,6 +42,7 @@ namespace PI_API
             builder.Services.AddSingleton<ImporterService>();
             builder.Services.AddScoped<BackupService>();
             builder.Services.AddScoped<DatabaseFormater>();
+            builder.Services.AddScoped<CreditService>();
 
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.AddSingleton<EmailService>();

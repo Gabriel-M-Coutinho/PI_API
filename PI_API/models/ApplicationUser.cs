@@ -10,10 +10,12 @@ namespace LeadSearch.Models
     [CollectionName("Users")]
     public class ApplicationUser : MongoIdentityUser
     {
+        
         public string FullName { get; set; } = string.Empty;
         public string CpfCnpj { get; set; } = string.Empty;
         public string? Tipo { get; set; }
         public bool Active { get; set; } = true;
+        public long Credits { get; set; } = 0;
         [BsonElement("role")]
         public ROLE Role { get; set; } = ROLE.STANDARD;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
