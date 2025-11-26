@@ -343,6 +343,7 @@ namespace PI_API.controllers
             return Ok(response);
         }
 
+        [Authorize(Roles = "ADMIN")]
         [HttpGet("EstablishmentsGraph")]
         public async Task<IActionResult> EstablishmentsGraph()
         {
@@ -382,6 +383,7 @@ namespace PI_API.controllers
             return Ok(resultado);
         }
 
+        [Authorize(Roles = "ADMIN")]
         [HttpGet("OrdersGraph")]
         public async Task<IActionResult> OrdersGraph()
         {
