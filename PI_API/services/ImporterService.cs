@@ -114,17 +114,23 @@ namespace PI_API.services
             sw.Stop();
             Console.WriteLine("# ReceitaImporter Finalizado #");
             Console.WriteLine($"Tempo Decorrido: {sw.Elapsed.Hours}h {sw.Elapsed.Minutes}m {sw.Elapsed.Seconds}s {sw.Elapsed.Milliseconds}ms");
-            await CreateIndexes();
         }
 
         public async Task CreateIndexes()
         {
             var estabelecimento = mongoDatabase.GetCollection<Estabelecimento>("Estabelecimentos");
             var indexKeys = Builders<Estabelecimento>.IndexKeys;
-            List<IndexKeysDefinition<Estabelecimento>> indexList = [indexKeys.Ascending(e => e.Bairro), indexKeys.Ascending(e => e.CEP), indexKeys.Ascending(e => e.CnaePrincipal), indexKeys.Ascending(e => e.CnaeSecundario), indexKeys.Ascending(e => e.DataInicioAtividade), indexKeys.Ascending(e => e.Ddd1), indexKeys.Ascending(e => e.MatrizFilial), indexKeys.Ascending(e => e.Municipio), indexKeys.Ascending(e => e.NomeFantasia), indexKeys.Ascending(e => e.UF), indexKeys.Ascending(e => e.CnpjCompleto)]; 
-            foreach(var index in indexList) 
+            List<IndexKeysDefinition<Estabelecimento>> estabelecimentoIndexList = [indexKeys.Ascending(e => e.Bairro), indexKeys.Ascending(e => e.CEP), indexKeys.Ascending(e => e.CnaePrincipal), indexKeys.Ascending(e => e.CnaeSecundario), indexKeys.Ascending(e => e.DataInicioAtividade), indexKeys.Ascending(e => e.Ddd1), indexKeys.Ascending(e => e.MatrizFilial), indexKeys.Ascending(e => e.Municipio), indexKeys.Ascending(e => e.NomeFantasia), indexKeys.Ascending(e => e.UF), indexKeys.Ascending(e => e.CnpjCompleto)]; 
+            foreach(var index in estabelecimentoIndexList) 
             {
                 await estabelecimento.Indexes.CreateOneAsync(new CreateIndexModel<Estabelecimento>(index));
+            }
+            var socios = mongoDatabase.GetCollection<Socio>("Socios");
+            var socioIndexKeys = Builders<Socio>.IndexKeys;
+            List<IndexKeysDefinition<Socio>> socioIndexList = [socioIndexKeys.Ascending(s => s.CnpjBase)];
+            foreach (var index in socioIndexList)
+            {
+                await socios.Indexes.CreateOneAsync(new CreateIndexModel<Socio>(index));
             }
             Console.WriteLine("Indices Criados com sucesso!");
             

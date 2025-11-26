@@ -477,11 +477,17 @@ namespace PI_API.controllers
 
             return Ok(new { success = true, data = lead });
         }
-        /*[HttpGet("infoFields")]
+        [HttpGet("infoFields")]
         public async Task<IActionResult> GetInfoFields()
         {
-            var result = await _context.Cnae.ToListAsync();
-            return
-        }*/
+            var Cnaes = await _context.Cnae.Find(_ => true).SortBy(e => e.Descricao).ToListAsync();
+            var Municipios = await _context.Municipio.Find(_ => true).SortBy(e => e.Descricao).ToListAsync();
+            if(Cnaes == null || Municipios == null)
+            {
+                return BadRequest("Falha ao Carregar dados");
+            }
+            var Response = new InfoFieldsDTO(Cnaes, Municipios);
+            return Ok(Response);
+        }
     }
 }
