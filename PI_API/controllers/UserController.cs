@@ -57,6 +57,7 @@ public class UserController : ControllerBase
         newUser.Email = userDto.Email;
         newUser.CpfCnpj = userDto.CpfCnpj;
         newUser.FullName = userDto.FullName;
+        newUser.Tipo = userDto.Tipo;
         newUser.CreatedAt = DateTime.Now;
         newUser.UpdatedAt = DateTime.Now;
         newUser.Active = true;
@@ -141,6 +142,7 @@ public class UserController : ControllerBase
         updatedUser.FullName = userDto.FullName;
         updatedUser.Email = userDto.Email;
         updatedUser.CpfCnpj = userDto.CpfCnpj;
+        updatedUser.Tipo = userDto.Tipo;
         updatedUser.UpdatedAt = DateTime.Now;
         updatedUser.Active = true;
 

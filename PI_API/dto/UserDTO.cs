@@ -22,4 +22,5 @@ public class UserDTO
     [MinLength(8)]
     [Required(ErrorMessage = "Por favor, digite uma senha!"), Display(Name = "Senha")]
     public string? Password { get; set; }
+    public string? Tipo { get; set; }
 }
