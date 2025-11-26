@@ -1,4 +1,5 @@
 ﻿using LeadSearch.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -9,6 +10,7 @@ using PI_API.dto;
 using PI_API.models;
 using PI_API.models.leads;
 using PI_API.services;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace PI_API.controllers
@@ -20,9 +22,16 @@ namespace PI_API.controllers
     public class LeadController : ControllerBase
     {
         private readonly ContextMongodb _context;
-        public LeadController(ContextMongodb context)
+        private readonly CreditService _creditService;
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        // CONFIGURAÇÃO FLEXÍVEL - Pode vir de appsettings.json ou banco de dados
+        private const int CREDITOS_POR_LEAD = 1; // Mude aqui para aumentar o valor
+        public LeadController(ContextMongodb context, CreditService creditService, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _creditService = creditService;
+            _userManager = userManager;
         }
 
         private Dictionary<string, string> SituacaoCadastral = new()
@@ -46,8 +55,30 @@ namespace PI_API.controllers
         }
         
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> Search()
         {
+            // 1º - VERIFICAR CRÉDITOS ANTES DE QUALQUER COISA
+            var userId = User.FindFirst("userid")?.Value; ;
+            ApplicationUser currentUser = null; // Mudei o nome para evitar conflito
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                Console.WriteLine("Entrei no primeiro IF");
+                currentUser = await _userManager.FindByIdAsync(userId);
+                var creditosAtuais = await _creditService.GetUserCredits(userId);
+
+                if (currentUser != null && creditosAtuais <= 0)
+                {
+                    Console.WriteLine("Entrei no segundo IF");
+                    return BadRequest(new ResponseDTO
+                    {
+                        Success = false,
+                        Message = "Você não tem créditos suficientes para visualizar leads."
+                    });
+                }
+            }
+
             var collection = _context.Estabelecimento;
             var query = Request.Query;
 
@@ -232,6 +263,43 @@ namespace PI_API.controllers
                 .Limit(pageSize)
                 .ToListAsync();
 
+            // 2º - REDUZIR CRÉDITOS APÓS A BUSCA
+            var creditosUsados = 0;
+            if (!string.IsNullOrEmpty(userId) && results.Any())
+            {
+                Console.WriteLine("Entrei no primeiro IF de reduzir créditos");
+                creditosUsados = results.Count * CREDITOS_POR_LEAD;
+                var sucesso = await _creditService.UseCredits(userId, creditosUsados);
+
+                if (!sucesso)
+                {
+                    Console.WriteLine("Entrei no segundo IF de reduzir créditos");
+                    return BadRequest(new ResponseDTO
+                    {
+                        Success = false,
+                        Message = $"Créditos insuficientes. Esta busca custaria {creditosUsados} créditos."
+                    });
+                }
+            }
+
+            // 3º - REGISTRAR LEADS COMPRADOS
+            var userToUpdate = await _userManager.FindByIdAsync(userId); // Novo nome para evitar conflito
+            if (userToUpdate != null)
+            {
+                Console.WriteLine("Entrei no primeiro de registrar os Leads");
+                foreach (var lead in results)
+                    {
+                        var cnpjCompleto = $"{lead.CnpjBase}{lead.CnpjOrdem}{lead.CnpjDV}";
+                        if (!userToUpdate.CnpjsComprados.Contains(cnpjCompleto))
+                        {
+                            Console.WriteLine("Entrei no segundo IF de registrar os Leads");
+                            userToUpdate.CnpjsComprados.Add(cnpjCompleto);
+                        }
+                    }
+                    await _userManager.UpdateAsync(userToUpdate);
+            }
+
+            var creditosRestantes = await _creditService.GetUserCredits(userId);
 
             var response = new ResponseDTO
             {

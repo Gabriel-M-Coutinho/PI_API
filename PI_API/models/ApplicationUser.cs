@@ -16,6 +16,7 @@ namespace LeadSearch.Models
         public string? Tipo { get; set; }
         public bool Active { get; set; } = true;
         public long Credits { get; set; } = 0;
+        public List<string> CnpjsComprados { get; set; } = new List<string>();
         [BsonElement("role")]
         public ROLE Role { get; set; } = ROLE.STANDARD;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
