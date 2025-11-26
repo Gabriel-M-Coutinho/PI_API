@@ -16,7 +16,7 @@ using System.Text.Json;
 
 namespace PI_API.controllers
 {
-    
+
 
     [Route("api/[controller]")]
     [ApiController]
@@ -54,7 +54,7 @@ namespace PI_API.controllers
             }
             throw new Exception();
         }
-        
+
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Search()
@@ -234,7 +234,7 @@ namespace PI_API.controllers
                                             capitalList.Add(builder.Gte("CapitalSocial", double.Parse(capitalRange[0])));
                                         if (capitalRange[1].Count() > 0)
                                             capitalList.Add(builder.Lte("CapitalSocial", double.Parse(capitalRange[1])));
-                                        if(capitalList.Count() > 0)
+                                        if (capitalList.Count() > 0)
                                             valuesList.Add(builder.And(capitalList));
                                         break;
                                     case 0:
@@ -267,13 +267,13 @@ namespace PI_API.controllers
                         break;
 
                     case "page":
-                        break; 
+                        break;
                     case "pageSize":
                         break;
                     default:
                         break;
                 }
-                if(valuesList.Count() > 0)
+                if (valuesList.Count() > 0)
                     filters.Add(builder.Or(valuesList));
             }
 
@@ -316,15 +316,15 @@ namespace PI_API.controllers
             {
                 Console.WriteLine("Entrei no primeiro de registrar os Leads");
                 foreach (var lead in results)
+                {
+                    var cnpjCompleto = $"{lead.CnpjBase}{lead.CnpjOrdem}{lead.CnpjDV}";
+                    if (!userToUpdate.CnpjsComprados.Contains(cnpjCompleto))
                     {
-                        var cnpjCompleto = $"{lead.CnpjBase}{lead.CnpjOrdem}{lead.CnpjDV}";
-                        if (!userToUpdate.CnpjsComprados.Contains(cnpjCompleto))
-                        {
-                            Console.WriteLine("Entrei no segundo IF de registrar os Leads");
-                            userToUpdate.CnpjsComprados.Add(cnpjCompleto);
-                        }
+                        Console.WriteLine("Entrei no segundo IF de registrar os Leads");
+                        userToUpdate.CnpjsComprados.Add(cnpjCompleto);
                     }
-                    await _userManager.UpdateAsync(userToUpdate);
+                }
+                await _userManager.UpdateAsync(userToUpdate);
             }
 
             var creditosRestantes = await _creditService.GetUserCredits(userId);
@@ -475,8 +475,13 @@ namespace PI_API.controllers
                 return NotFound(new { success = false, message = "Lead não encontrado." });
             }
 
-            return Ok(new { success = true, data = lead});
+            return Ok(new { success = true, data = lead });
         }
-
+        /*[HttpGet("infoFields")]
+        public async Task<IActionResult> GetInfoFields()
+        {
+            var result = await _context.Cnae.ToListAsync();
+            return
+        }*/
     }
 }

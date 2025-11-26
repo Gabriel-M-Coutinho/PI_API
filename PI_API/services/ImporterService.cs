@@ -119,12 +119,12 @@ namespace PI_API.services
 
         public async Task CreateIndexes()
         {
-            var collection = mongoDatabase.GetCollection<Estabelecimento>("Estabelecimentos");
+            var estabelecimento = mongoDatabase.GetCollection<Estabelecimento>("Estabelecimentos");
             var indexKeys = Builders<Estabelecimento>.IndexKeys;
-            List<IndexKeysDefinition<Estabelecimento>> indexList = [indexKeys.Ascending(e => e.Bairro), indexKeys.Ascending(e => e.CEP), indexKeys.Ascending(e => e.CnaePrincipal), indexKeys.Ascending(e => e.CnaeSecundario), indexKeys.Ascending(e => e.DataInicioAtividade), indexKeys.Ascending(e => e.Ddd1), indexKeys.Ascending(e => e.MatrizFilial), indexKeys.Ascending(e => e.Municipio), indexKeys.Ascending(e => e.NomeFantasia), indexKeys.Ascending(e => e.UF)]; 
+            List<IndexKeysDefinition<Estabelecimento>> indexList = [indexKeys.Ascending(e => e.Bairro), indexKeys.Ascending(e => e.CEP), indexKeys.Ascending(e => e.CnaePrincipal), indexKeys.Ascending(e => e.CnaeSecundario), indexKeys.Ascending(e => e.DataInicioAtividade), indexKeys.Ascending(e => e.Ddd1), indexKeys.Ascending(e => e.MatrizFilial), indexKeys.Ascending(e => e.Municipio), indexKeys.Ascending(e => e.NomeFantasia), indexKeys.Ascending(e => e.UF), indexKeys.Ascending(e => e.CnpjCompleto)]; 
             foreach(var index in indexList) 
             {
-                await collection.Indexes.CreateOneAsync(new CreateIndexModel<Estabelecimento>(index));
+                await estabelecimento.Indexes.CreateOneAsync(new CreateIndexModel<Estabelecimento>(index));
             }
             Console.WriteLine("Indices Criados com sucesso!");
             
@@ -286,6 +286,10 @@ namespace PI_API.services
                         try
                         {
                             BsonDocument doc = ParseCsvLine(line.Span);
+                            if (fileName == "Estabelecimentos")
+                            {
+                                doc["CnpjCompleto"] = $"{doc["CnpjBase"]}{doc["CnpjOrdem"]}{doc["CnpjDV"]}";
+                            }
                             await writer.WriteAsync(doc);
                         }
                         catch (Exception ex)

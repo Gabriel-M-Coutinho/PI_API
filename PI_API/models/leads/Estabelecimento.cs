@@ -11,6 +11,7 @@ public class Estabelecimento
     public string CnpjBase { get; set; }
     public string CnpjOrdem { get; set; }
     public string CnpjDV { get; set; }
+    public string CnpjCompleto { get; set; }
     public string MatrizFilial { get; set; }
     public string NomeFantasia { get; set; }
     public string SituacaoCadastral { get; set; }
@@ -44,7 +45,7 @@ public class Estabelecimento
 
     // Construtor atualizado
     public Estabelecimento(
-        string cnpjBase, string cnpjOrdem, string cnpjDV, string matrizFilial,
+        string cnpjBase, string cnpjOrdem, string cnpjDV, string cnpjCompleto, string matrizFilial,
         string nomeFantasia, string situacaoCadastral, DateTime? dataSituacaoCadastral,
         string motivoSituacaoCadastral, string cidadeExterior, string pais,
         DateTime? dataInicioAtividade, string cnaePrincipal, List<string> cnaeSecundario,
@@ -56,6 +57,7 @@ public class Estabelecimento
         CnpjBase = cnpjBase;
         CnpjOrdem = cnpjOrdem;
         CnpjDV = cnpjDV;
+        CnpjCompleto = cnpjCompleto;
         MatrizFilial = matrizFilial;
         NomeFantasia = nomeFantasia;
         SituacaoCadastral = situacaoCadastral;
