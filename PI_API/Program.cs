@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using PI_API.seeds;
 using MongoDB.Driver;
 using PI_API.db;
 using PI_API.models;
@@ -15,22 +16,20 @@ namespace PI_API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)   // ⬅️ AGORA É ASYNC
         {
             var builder = WebApplication.CreateBuilder(args);
             Stripe.StripeConfiguration.ApiKey = builder.Configuration.GetValue<string>("Stripe:SecretKey");
             builder.Services.AddControllers();
-            
+
             // ScheduleService
-            //builder.Services.AddHostedService<ScheduleService>();
             builder.Services.AddHostedService<ImporterScheduleService>();
             builder.Services.AddHostedService<BackupScheduleService>();
-
 
             //  MONGODB SETTINGS
             builder.Services.Configure<MongoDbSettings>(
                 builder.Configuration.GetSection("MongoDbSettings"));
-            //uma linha
+
             builder.Services.AddSingleton<ContextMongodb>();
 
             ContextMongodb.ConnectionString = builder.Configuration.GetSection("MongoDbSettings:ConnectionString").Value;
@@ -48,23 +47,19 @@ namespace PI_API
             builder.Services.AddSingleton<EmailService>();
 
             // IDENTITY + MONGODB
-
             builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
-                {
-                    options.SignIn.RequireConfirmedEmail = false;
-                })
-                .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>(
-                    builder.Configuration["MongoDbSettings:ConnectionString"],
-                    builder.Configuration["MongoDbSettings:DatabaseName"])
-                
-                .AddDefaultTokenProviders();
-            
-            // Obtém a chave JWT do appsettings.json
+            {
+                options.SignIn.RequireConfirmedEmail = false;
+            })
+            .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>(
+                builder.Configuration["MongoDbSettings:ConnectionString"],
+                builder.Configuration["MongoDbSettings:DatabaseName"])
+            .AddDefaultTokenProviders();
+
+            // JWT
             var jwtKey = builder.Configuration["Jwt:Key"];
             if (string.IsNullOrEmpty(jwtKey))
-            {
-                throw new Exception("❌ Erro: A chave JWT (Jwt:Key) não foi configurada no appsettings.json ou nas variáveis de ambiente.");
-            }
+                throw new Exception("❌ Erro: A chave JWT (Jwt:Key) não foi configurada.");
 
             var jwtIssuer = builder.Configuration["Jwt:Issuer"];
             var jwtAudience = builder.Configuration["Jwt:Audience"];
@@ -90,11 +85,9 @@ namespace PI_API
                     ValidIssuer = jwtIssuer,
                     ValidAudience = jwtAudience,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-
-                    ClockSkew = TimeSpan.Zero // evita atrasos de expiração
+                    ClockSkew = TimeSpan.Zero
                 };
 
-    
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
@@ -103,16 +96,12 @@ namespace PI_API
                         var path = context.HttpContext.Request.Path;
 
                         if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/api"))
-                        {
                             context.Token = accessToken;
-                        }
 
                         return Task.CompletedTask;
                     }
                 };
             });
-
-            
 
             builder.Services.AddAuthorization();
 
@@ -120,20 +109,17 @@ namespace PI_API
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy
-                        .WithOrigins("http://localhost:5173")
+                    policy.WithOrigins("http://localhost:5173")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
                 });
             });
 
-            //  SWAGGER + JWT CONFIG
-
+            // SWAGGER
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
-                // Define o esquema JWT
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
@@ -141,10 +127,9 @@ namespace PI_API
                     Scheme = "Bearer",
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Digite 'Bearer' [espaço] e em seguida o token JWT.\n\nExemplo: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    Description = "Digite 'Bearer' + espaço + token JWT."
                 });
 
-                // Aplica globalmente a segurança
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
@@ -156,7 +141,7 @@ namespace PI_API
                                 Id = "Bearer"
                             }
                         },
-                        new string[] {}
+                        new string[]{}
                     }
                 });
             });
@@ -172,7 +157,7 @@ namespace PI_API
 
             app.MapGet("/", () => Results.Redirect("/swagger"));
 
-            // 🔥 CRIA AUTOMATICAMENTE AS ROLES DO ENUM NO MONGO
+            // 🔥 CRIA AUTOMATICAMENTE AS ROLES E O ADMIN
             using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
@@ -181,20 +166,24 @@ namespace PI_API
                 {
                     string roleName = enumValue.ToString();
 
-                    if (!roleManager.RoleExistsAsync(roleName).Result)
+                    if (!await roleManager.RoleExistsAsync(roleName))  // ⬅️ await aqui
                     {
-                        roleManager.CreateAsync(new ApplicationRole
+                        await roleManager.CreateAsync(new ApplicationRole   // ⬅️ await aqui
                         {
                             Name = roleName
-                        }).Wait();
+                        });
                     }
                 }
+
+                string defaultAdminPassword = app.Configuration["AdminSettings:DefaultPassword"]
+                    ?? throw new InvalidOperationException("AdminSettings:DefaultPassword não configurada.");
+
+                // ⬅️ AGORA FUNCIONA
+                await AdminSeeder.SeedRolesAndAdminUser(scope.ServiceProvider, defaultAdminPassword);
             }
 
             app.UseHttpsRedirection();
-
             app.UseCors("AllowFrontend");
-
             app.UseAuthentication();
             app.UseAuthorization();
 
