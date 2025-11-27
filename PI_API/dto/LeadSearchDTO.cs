@@ -13,6 +13,7 @@ namespace PI_API.dto
         [BsonRepresentation(BsonType.ObjectId)]
         public string _id { get; set; }
         public string CnpjBase { get; set; }
+        public string? CnpjCompleto { get; set; } 
         public string CnpjOrdem { get; set; }
         public string CnpjDV { get; set; }
         public string MatrizFilial { get; set; }
