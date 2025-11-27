@@ -1,5 +1,6 @@
 ﻿using LeadSearch.Models;
 using Microsoft.AspNetCore.Identity;
+using PI_API.models;
 
 namespace PI_API.seeds
 {
@@ -15,15 +16,12 @@ namespace PI_API.seeds
 
             if (await roleManager.FindByNameAsync(adminRole) == null)
             {
-                var result = await roleManager.CreateAsync(new ApplicationRole { Name = adminRole });
-                if (result.Succeeded)
+                await roleManager.CreateAsync(new ApplicationRole
                 {
-                    Console.WriteLine($"[SEED] Role '{adminRole}' criada com sucesso.");
-                }
-            }
-            else
-            {
-                Console.WriteLine($"[SEED] Role '{adminRole}' já existe.");
+                    Name = adminRole,
+                    NormalizedName = adminRole.ToUpper()
+                });
+                Console.WriteLine($"[SEED] Role '{adminRole}' criada.");
             }
 
             if (await userManager.FindByEmailAsync(adminEmail) == null)
@@ -32,25 +30,41 @@ namespace PI_API.seeds
                 {
                     UserName = adminEmail,
                     Email = adminEmail,
-                    FullName = "Administrador"
+                    FullName = "Administrador",
+                    CpfCnpj = "00000000000",
+                    Tipo = "ADMIN",
+                    Active = true,
+                    Role = ROLE.ADMIN
                 };
 
-                IdentityResult createResult = await userManager.CreateAsync(adminUser, defaultPassword);
+                var createResult = await userManager.CreateAsync(adminUser, defaultPassword);
 
-                if (!createResult.Succeeded) throw new Exception($"Erro ao criar Admin: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
-
-                var createdAdmin = await userManager.FindByEmailAsync(adminEmail);
-                await userManager.AddToRoleAsync(createdAdmin, adminRole);
-
-                if (createResult.Succeeded)
+                if (!createResult.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(adminUser, adminRole);
-                    Console.WriteLine($"[SEED] Usuário Admin '{adminEmail}' criado e role atribuída.");
+                    throw new Exception($"Erro ao criar Admin: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+                }
+
+                var addToRoleResult = await userManager.AddToRoleAsync(adminUser, adminRole);
+
+                if (addToRoleResult.Succeeded)
+                {
+                    Console.WriteLine($"[SEED] Usuário Admin '{adminEmail}' criado e role ADMIN atribuída.");
+                }
+                else
+                {
+                    Console.WriteLine($"[SEED] Erro ao adicionar role: {string.Join(", ", addToRoleResult.Errors.Select(e => e.Description))}");
                 }
             }
             else
             {
                 Console.WriteLine($"[SEED] Usuário Admin '{adminEmail}' já existe.");
+
+                var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
+                if (!await userManager.IsInRoleAsync(existingAdmin, adminRole))
+                {
+                    await userManager.AddToRoleAsync(existingAdmin, adminRole);
+                    Console.WriteLine($"[SEED] Role ADMIN atribuída ao usuário existente.");
+                }
             }
         }
     }
